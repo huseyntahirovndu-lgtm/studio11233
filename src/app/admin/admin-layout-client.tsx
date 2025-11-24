@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, Users2, Library, Newspaper, School, ListTree, ShieldCheck } from "lucide-react"
+import { Home, Users2, Library, School, ListTree, ShieldCheck } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { useEffect } from "react";
@@ -16,7 +16,6 @@ const NAV_LINKS = [
     { href: "/admin/dashboard", icon: Home, label: "Panel", exact: true },
     { href: "/admin/students", icon: Users2, label: "Tələbələr" },
     { href: "/admin/telebe-teskilatlari", icon: Library, label: "Tələbə Təşkilatları" },
-    { href: "/admin/news", icon: Newspaper, label: "Xəbərlər" },
     { href: "/admin/faculties", icon: School, label: "Fakültələr" },
     { href: "/admin/categories", icon: ListTree, label: "Kateqoriyalar" },
 ];

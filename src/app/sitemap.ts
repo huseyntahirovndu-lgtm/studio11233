@@ -1,6 +1,6 @@
 import { getDocs, collection } from 'firebase/firestore';
 import { initializeServerFirebase } from '@/firebase/server-init';
-import { Student, News } from '@/types';
+import { Student } from '@/types';
 
 const BASE_URL = 'https://istedadmerkezi.net';
 
@@ -8,7 +8,7 @@ export default async function sitemap() {
   const { firestore } = initializeServerFirebase();
 
   // Static pages
-  const routes = ['', '/search', '/rankings', '/xeberler'].map((route) => ({
+  const routes = ['', '/search', '/rankings'].map((route) => ({
     url: `${BASE_URL}${route}`,
     lastModified: new Date().toISOString(),
   }));
@@ -28,20 +28,5 @@ export default async function sitemap() {
   }
 
 
-  let newsUrls: any[] = [];
-  try {
-    const newsSnapshot = await getDocs(collection(firestore, 'news'));
-    newsUrls = newsSnapshot.docs.map((doc) => {
-      const news = doc.data() as News;
-      return {
-        url: `${BASE_URL}/xeberler/${news.slug}`,
-        lastModified: news.updatedAt?.toDate().toISOString() || news.createdAt.toDate().toISOString(),
-      };
-    });
-  } catch(e) {
-    console.error("Could not fetch news for sitemap", e);
-  }
-
-
-  return [...routes, ...studentUrls, ...newsUrls];
+  return [...routes, ...studentUrls];
 }

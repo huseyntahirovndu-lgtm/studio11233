@@ -13,16 +13,15 @@ import { StatCard } from '@/components/stat-card';
 import { StudentCard } from '@/components/student-card';
 import { CategoryPieChart } from '@/components/charts/category-pie-chart';
 import { FacultyBarChart } from '@/components/charts/faculty-bar-chart';
-import { Student, Project, CategoryData, Achievement, News, StudentOrganization } from '@/types';
+import { Student, Project, CategoryData, Achievement, StudentOrganization } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
-import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { selectTopStories } from '@/app/actions';
-import { format } from 'date-fns';
 
 interface EnrichedProject extends Project {
     student?: Student;
@@ -61,26 +60,42 @@ export default function HomePage() {
   const { user } = useAuth();
 
   const studentsQuery = useMemoFirebase(() => query(collection(firestore, "users"), where("status", "==", "təsdiqlənmiş"), where("role", "==", "student")), [firestore]);
-  const projectsQuery = useMemoFirebase(() => collection(firestore, "projects"), [firestore]);
   const studentOrgsQuery = useMemoFirebase(() => query(collection(firestore, "student-organizations"), where("status", "==", "təsdiqlənmiş")), [firestore]);
   const categoriesQuery = useMemoFirebase(() => collection(firestore, "categories"), [firestore]);
-  const achievementsQuery = useMemoFirebase(() => collection(firestore, "achievements"), [firestore]);
-  const newsQuery = useMemoFirebase(() => query(collection(firestore, 'news'), orderBy('createdAt', 'desc'), limit(3)), [firestore]);
-  
+
   const { data: students, isLoading: studentsLoading } = useCollection<Student>(studentsQuery);
-  const { data: projects, isLoading: projectsLoading } = useCollection<Project>(projectsQuery);
   const { data: studentOrgs, isLoading: studentOrgsLoading } = useCollection<StudentOrganization>(studentOrgsQuery);
   const { data: categories, isLoading: categoriesLoading } = useCollection<CategoryData>(categoriesQuery);
-  const { data: achievements, isLoading: achievementsLoading } = useCollection<Achievement>(achievementsQuery);
-  const { data: latestNews, isLoading: newsLoading } = useCollection<News>(newsQuery);
 
   const [topTalents, setTopTalents] = useState<Student[]>([]);
   const [newMembers, setNewMembers] = useState<Student[]>([]);
   const [strongestProjects, setStrongestProjects] = useState<EnrichedProject[]>([]);
   const [popularSkills, setPopularSkills] = useState<string[]>([]);
   const [successStories, setSuccessStories] = useState<SuccessStory[]>([]);
+  const [stats, setStats] = useState({ projects: 0, achievements: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
   
-  const isLoading = studentsLoading || projectsLoading || studentOrgsLoading || categoriesLoading || achievementsLoading || newsLoading;
+  const isLoading = studentsLoading || studentOrgsLoading || categoriesLoading || statsLoading;
+
+  useEffect(() => {
+    if (firestore && students) {
+        const fetchStats = async () => {
+            setStatsLoading(true);
+            let projectCount = 0;
+            let achievementCount = 0;
+            
+            for (const student of students) {
+                const projectsSnap = await getDocs(collection(firestore, `users/${student.id}/projects`));
+                const achievementsSnap = await getDocs(collection(firestore, `users/${student.id}/achievements`));
+                projectCount += projectsSnap.size;
+                achievementCount += achievementsSnap.size;
+            }
+            setStats({ projects: projectCount, achievements: achievementCount });
+            setStatsLoading(false);
+        };
+        fetchStats();
+    }
+  }, [firestore, students]);
 
   useEffect(() => {
     if (!students || students.length === 0) return;
@@ -137,22 +152,23 @@ export default function HomePage() {
   }, [students]);
 
    useEffect(() => {
-    if (!projects || !students) return;
+    if (!students || !firestore) return;
     
-    const studentOwnedProjects = projects.filter(p => p.ownerType === 'student' && students.some(s => s.id === p.ownerId));
-    
-    const enrichProjects = async () => {
-        const enriched = await Promise.all(studentOwnedProjects.map(async p => {
-            return {
-                ...p,
-                student: students.find(s => s.id === p.ownerId)
-            }
-        }));
-         setStrongestProjects(enriched.slice(0, 3));
+    const fetchProjects = async () => {
+        const allStudentProjects: EnrichedProject[] = [];
+        for (const student of students) {
+            const projectsCol = collection(firestore, `users/${student.id}/projects`);
+            const projectsSnap = await getDocs(projectsCol);
+            projectsSnap.forEach(doc => {
+                allStudentProjects.push({ ...doc.data() as Project, id: doc.id, student });
+            });
+        }
+        // Here we can add sorting logic if needed, e.g., by date
+        setStrongestProjects(allStudentProjects.slice(0, 3));
     }
-    enrichProjects();
+    fetchProjects();
     
-   }, [projects, students]);
+   }, [students, firestore]);
 
 
   return (
@@ -187,54 +203,14 @@ export default function HomePage() {
               />
               <StatCard
                 title="Aktiv Layihələr"
-                value={isLoading ? '...' : (projects?.length.toString() ?? '0')}
+                value={isLoading ? '...' : (stats.projects.toString())}
                 icon={Lightbulb}
               />
               <StatCard
                 title="Ümumi Uğurlar"
-                value={isLoading ? '...' : (achievements?.length.toString() ?? '0')}
+                value={isLoading ? '...' : (stats.achievements.toString())}
                 icon={Trophy}
               />
-            </div>
-          </section>
-
-          <section className="py-12">
-             <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold">Son Xəbərlər</h2>
-                <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">Universitet və tələbə həyatı ilə bağlı ən son yeniliklər.</p>
-            </div>
-            {newsLoading ? (
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <Skeleton className="h-96 w-full" />
-                    <Skeleton className="h-96 w-full" />
-                    <Skeleton className="h-96 w-full" />
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {latestNews && latestNews.length > 0 ? latestNews.map(news => (
-                        <Card key={news.id} className="overflow-hidden group">
-                           <Link href={`/xeberler/${news.slug}`}>
-                                <div className="relative h-56 w-full">
-                                    <Image src={news.coverImageUrl || 'https://picsum.photos/seed/news/600/400'} alt={news.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105"/>
-                                </div>
-                                <CardHeader>
-                                    <CardTitle className="line-clamp-2 group-hover:text-primary">{news.title}</CardTitle>
-                                    <CardDescription>{news.createdAt ? format(news.createdAt.toDate(), 'dd MMMM, yyyy') : ''}</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="line-clamp-3 text-sm text-muted-foreground">{news.content.replace(/<[^>]*>?/gm, '').substring(0, 100)}...</p>
-                                </CardContent>
-                           </Link>
-                        </Card>
-                    )) : (
-                         <p className="text-center col-span-full text-muted-foreground">Hazırda heç bir xəbər yoxdur.</p>
-                    )}
-                </div>
-            )}
-             <div className="text-center mt-8">
-                <Button asChild variant="outline">
-                    <Link href="/xeberler">Bütün Xəbərlər <ArrowRight className="ml-2 h-4 w-4" /></Link>
-                </Button>
             </div>
           </section>
 
