@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useRef, ChangeEvent, useMemo } from 'react';
-import dynamic from 'next/dynamic';
+import { useState, useRef, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, Controller, SubmitHandler } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
@@ -17,13 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Upload } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { slugify } from '@/lib/utils';
-import 'react-quill/dist/quill.snow.css';
-import { Skeleton } from '@/components/ui/skeleton';
-
-const RichTextEditor = dynamic(() => import('@/components/ui/rich-text-editor'), { 
-    ssr: false,
-    loading: () => <Skeleton className="h-[200px] w-full rounded-md" />
-});
+import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
   title: z.string().min(5, "Başlıq ən azı 5 hərf olmalıdır."),
@@ -192,8 +185,11 @@ export default function NewsEditForm({ initialData, onSuccess, authorId, authorN
                 <FormItem>
                   <FormLabel>Məzmun</FormLabel>
                   <FormControl>
-                    <RichTextEditor {...field} />
+                    <Textarea {...field} rows={15} placeholder="Xəbərin tam mətni..." />
                   </FormControl>
+                   <div className="text-sm text-muted-foreground">
+                    Mətni formatlamaq üçün sadə HTML teqlərindən istifadə edə bilərsiniz (məs: `<b>qalin</b>`, `<h2>başlıq</h2>`, `<ul><li>siyahı</li></ul>`).
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
