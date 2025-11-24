@@ -1,42 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs/promises';
 import path from 'path';
-import fs from 'fs';
-import { lookup } from 'mime-types';
 
-export async function GET(req: NextRequest, { params }: { params: { filename: string } }) {
-  const { filename } = params;
-
-  // Path Traversal hücumlarının qarşısını almaq üçün təhlükəsizlik yoxlaması
-  const safeFilename = path.normalize(filename).replace(/^(\.\.[\/\\])+/, '');
-  if (safeFilename !== filename) {
-    return NextResponse.json({ error: 'Giriş qadağandır' }, { status: 403 });
-  }
-
-  const filePath = path.join(process.cwd(), 'public', 'uploads', 'senedler', safeFilename);
-
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { filename: string } }
+) {
   try {
+    const filename = params.filename;
+    const filePath = path.join(process.cwd(), 'api', 'senedler', filename);
+
     // Faylın mövcudluğunu yoxla
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: 'Fayl tapılmadı' }, { status: 404 });
+    try {
+      await fs.access(filePath);
+    } catch {
+      return NextResponse.json(
+        { error: 'Fayl tapılmadı' },
+        { status: 404 }
+      );
     }
 
     // Faylı oxu
-    const fileBuffer = fs.readFileSync(filePath);
+    const fileBuffer = await fs.readFile(filePath);
+    
+    // MIME type təyin et
+    const ext = path.extname(filename).toLowerCase();
+    const mimeTypes: { [key: string]: string } = {
+      '.pdf': 'application/pdf',
+      '.doc': 'application/msword',
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.xls': 'application/vnd.ms-excel',
+      '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    };
+    
+    const contentType = mimeTypes[ext] || 'application/octet-stream';
 
-    // Mime növünü təyin et
-    const mimeType = lookup(filePath) || 'application/octet-stream';
-
-    // Faylı düzgün header ilə qaytar
+    // Faylı qaytار
     return new NextResponse(fileBuffer, {
-      status: 200,
       headers: {
-        'Content-Type': mimeType,
-        // 'attachment' faylı yükləməyə, 'inline' isə göstərməyə məcbur edir
-        'Content-Disposition': `inline; filename="${safeFilename}"`,
+        'Content-Type': contentType,
+        'Content-Disposition': `inline; filename="${encodeURIComponent(filename)}"`,
+        'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
   } catch (error) {
-    console.error('Fayl göstərmə xətası:', error);
-    return NextResponse.json({ error: 'Daxili server xətası' }, { status: 500 });
+    console.error('Sənəd yükləmə xətası:', error);
+    return NextResponse.json(
+      { error: 'Server xətası' },
+      { status: 500 }
+    );
   }
 }
