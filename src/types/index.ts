@@ -34,17 +34,20 @@ export interface Project {
   id: string;
   ownerId: string; // Owner ID (can be student or organization)
   ownerType: 'student' | 'organization';
+  ownerName: string;
+  ownerLogo?: string;
   title: string;
   description: string;
   role: string;
   link?: string;
   mediaLink?: string;
-  teamMembers?: string[];
   teamMemberIds?: string[];
   invitedStudentIds?: string[];
-  applicantIds?: string[];
+  applicantIds?: string[]; // IDs of students who applied
   status: 'davam edir' | 'tamamlanıb';
+  createdAt: any;
 }
+
 
 export interface Achievement {
   id: string;
@@ -154,14 +157,26 @@ export interface CategoryData {
     name: string;
 }
 
-export type InvitationStatus = 'gözləyir' | 'qəbul edildi' | 'rədd edildi' | 'müraciət';
+export type InvitationStatus = 'gözləyir' | 'qəbul edildi' | 'rədd edildi';
+export type ApplicationStatus = 'gözləyir' | 'qəbul edildi' | 'rədd edildi';
+
 export interface Invitation {
     id: string;
     organizationId: string;
     studentId: string;
     projectId: string;
     status: InvitationStatus;
-    createdAt: Date;
+    createdAt: any;
 }
+
+export interface Application {
+    id: string;
+    organizationId: string;
+    studentId: string;
+    projectId: string;
+    status: ApplicationStatus;
+    createdAt: any;
+}
+
 
 export type AppUser = Student | StudentOrganization | Admin;

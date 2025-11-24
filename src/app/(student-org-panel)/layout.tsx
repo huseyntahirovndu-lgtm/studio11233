@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, Newspaper, Settings, Users, Library, Menu } from "lucide-react"
+import { Home, Newspaper, Settings, Users, Library, Menu, Briefcase } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { useEffect, createContext, useContext } from "react";
@@ -15,6 +15,7 @@ import { Logo } from "@/components/logo";
 const NAV_LINKS = [
     { href: "/telebe-teskilati-paneli/dashboard", icon: Home, label: "Panel", exact: true },
     { href: "/telebe-teskilati-paneli/members", icon: Users, label: "Üzvlər" },
+    { href: "/telebe-teskilati-paneli/projects", icon: Briefcase, label: "Layihələr" },
     { href: "/telebe-teskilati-paneli/updates", icon: Newspaper, label: "Yeniliklər" },
 ];
 
@@ -63,8 +64,7 @@ export default function StudentOrganizationLayout({
   }
   
   const isActive = (href: string, exact?: boolean) => {
-    const cleanPathname = pathname.replace('/(student-org-panel)', '/telebe-teskilati-paneli');
-    return exact ? cleanPathname === href : cleanPathname.startsWith(href);
+    return exact ? pathname === href : pathname.startsWith(href);
   }
 
   return (
@@ -96,11 +96,11 @@ export default function StudentOrganizationLayout({
             </nav>
           </div>
           <div className="mt-auto p-4 border-t">
-            <Link href="/profile/edit">
-              <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
-                <Settings className="h-4 w-4" /> Profil Ayarları
-              </Button>
-            </Link>
+            <Button asChild variant="ghost" size="sm" className="w-full justify-start gap-2">
+                <Link href={`/telebe-teskilatlari/${organization?.id}`}>
+                    <Settings className="h-4 w-4" /> İctimai Profil
+                </Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -140,11 +140,11 @@ export default function StudentOrganizationLayout({
                 ))}
               </nav>
                 <div className="mt-auto p-4 border-t">
-                  <Link href="/profile/edit">
-                    <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
-                      <Settings className="h-4 w-4" /> Profil Ayarları
-                    </Button>
-                  </Link>
+                  <Button asChild variant="ghost" size="sm" className="w-full justify-start gap-2">
+                     <Link href={`/telebe-teskilatlari/${organization?.id}`}>
+                        <Settings className="h-4 w-4" /> İctimai Profil
+                    </Link>
+                  </Button>
                 </div>
             </SheetContent>
           </Sheet>
