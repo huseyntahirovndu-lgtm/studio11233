@@ -13,7 +13,7 @@ import { StatCard } from '@/components/stat-card';
 import { StudentCard } from '@/components/student-card';
 import { CategoryPieChart } from '@/components/charts/category-pie-chart';
 import { FacultyBarChart } from '@/components/charts/faculty-bar-chart';
-import { Student, Project, CategoryData, Achievement, StudentOrganization } from '@/types';
+import { Student, Project, CategoryData, Achievement, StudentOrganization, News } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { selectTopStories } from '@/app/actions';
+import { format } from 'date-fns';
 
 interface EnrichedProject extends Project {
     student?: Student;
@@ -62,10 +63,12 @@ export default function HomePage() {
   const studentsQuery = useMemoFirebase(() => query(collection(firestore, "users"), where("status", "==", "təsdiqlənmiş"), where("role", "==", "student")), [firestore]);
   const studentOrgsQuery = useMemoFirebase(() => query(collection(firestore, "student-organizations"), where("status", "==", "təsdiqlənmiş")), [firestore]);
   const categoriesQuery = useMemoFirebase(() => collection(firestore, "categories"), [firestore]);
+  const newsQuery = useMemoFirebase(() => query(collection(firestore, 'news'), orderBy('createdAt', 'desc'), limit(3)), [firestore]);
 
   const { data: students, isLoading: studentsLoading } = useCollection<Student>(studentsQuery);
   const { data: studentOrgs, isLoading: studentOrgsLoading } = useCollection<StudentOrganization>(studentOrgsQuery);
   const { data: categories, isLoading: categoriesLoading } = useCollection<CategoryData>(categoriesQuery);
+  const { data: latestNews, isLoading: newsLoading } = useCollection<News>(newsQuery);
 
   const [topTalents, setTopTalents] = useState<Student[]>([]);
   const [newMembers, setNewMembers] = useState<Student[]>([]);
@@ -75,7 +78,7 @@ export default function HomePage() {
   const [stats, setStats] = useState({ projects: 0, achievements: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
   
-  const isLoading = studentsLoading || studentOrgsLoading || categoriesLoading || statsLoading;
+  const isLoading = studentsLoading || studentOrgsLoading || categoriesLoading || statsLoading || newsLoading;
 
   useEffect(() => {
     if (firestore && students) {
@@ -157,10 +160,14 @@ export default function HomePage() {
     const fetchProjects = async () => {
         const allStudentProjects: EnrichedProject[] = [];
         for (const student of students) {
+            if(student.role !== 'student') continue;
             const projectsCol = collection(firestore, `users/${student.id}/projects`);
             const projectsSnap = await getDocs(projectsCol);
             projectsSnap.forEach(doc => {
-                allStudentProjects.push({ ...doc.data() as Project, id: doc.id, student });
+                const projectData = doc.data() as Project;
+                if(projectData.ownerType === 'student') {
+                    allStudentProjects.push({ ...projectData, id: doc.id, student });
+                }
             });
         }
         // Here we can add sorting logic if needed, e.g., by date
@@ -238,6 +245,52 @@ export default function HomePage() {
              )}
           </section>
           
+           <section className="py-12">
+              <div className="text-center mb-12">
+                  <h2 className="text-3xl md:text-4xl font-bold">Son Xəbərlər</h2>
+                  <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">Universitet və tələbə həyatı ilə bağlı ən son yeniliklər.</p>
+              </div>
+              {isLoading ? (
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      <Skeleton className="h-64 w-full" />
+                      <Skeleton className="h-64 w-full" />
+                      <Skeleton className="h-64 w-full" />
+                  </div>
+              ) : latestNews && latestNews.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      {latestNews.map(newsItem => (
+                         <Link key={newsItem.id} href={`/xeberler/${newsItem.slug}`} className="block group">
+                           <Card className="overflow-hidden h-full flex flex-col">
+                             {newsItem.coverImageUrl && (
+                               <div className="relative w-full h-40">
+                                 <Image src={newsItem.coverImageUrl} alt={newsItem.title} fill className="object-cover" />
+                               </div>
+                             )}
+                             <CardHeader>
+                               <CardTitle className="text-lg group-hover:text-primary transition-colors">{newsItem.title}</CardTitle>
+                               <CardDescription>{newsItem.createdAt ? format(newsItem.createdAt.toDate(), 'dd MMMM, yyyy') : ''}</CardDescription>
+                             </CardHeader>
+                             <CardContent className="flex-grow">
+                               <p className="text-sm text-muted-foreground line-clamp-3">{newsItem.content.replace(/<[^>]*>?/gm, '')}</p>
+                             </CardContent>
+                           </Card>
+                         </Link>
+                      ))}
+                  </div>
+              ) : (
+                  <div className="text-center py-10 text-muted-foreground">
+                      <p>Hələlik heç bir xəbər yoxdur.</p>
+                  </div>
+              )}
+               {latestNews && latestNews.length > 0 && (
+                <div className="text-center mt-8">
+                    <Button asChild>
+                        <Link href="/xeberler">Bütün Xəbərlər <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                    </Button>
+                </div>
+               )}
+          </section>
+
           <section className="py-12 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
               <div className="lg:col-span-2">
                   <h2 className="text-3xl md:text-4xl font-bold mb-8">Ən Güclü Tələbə Layihələri</h2>

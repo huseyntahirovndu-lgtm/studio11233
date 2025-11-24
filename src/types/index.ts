@@ -122,6 +122,18 @@ export interface StudentOrganization extends BaseUser {
   status: StudentOrganizationStatus;
 }
 
+export interface News {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  coverImageUrl?: string;
+  authorId: string;
+  authorName: string;
+  createdAt: any;
+  updatedAt?: any;
+}
+
 export interface StudentOrgUpdate {
   id: string;
   organizationId: string;

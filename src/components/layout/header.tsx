@@ -15,6 +15,7 @@ import { useState } from 'react';
 
 const navLinks = [
   { href: '/', label: 'Ana Səhifə' },
+  { href: '/xeberler', label: 'Xəbərlər' },
   { href: '/telebe-teskilatlari', label: 'Tələbə Təşkilatları' },
   { href: '/search', label: 'Axtarış' },
   { href: '/rankings', label: 'Reytinq' },
