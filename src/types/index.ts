@@ -30,6 +30,7 @@ export interface Skill {
   level: SkillLevel;
 }
 
+export type ProjectStatus = 'aktiv' | 'bitmiş';
 export interface Project {
   id: string;
   ownerId: string; // Owner ID (can be student or organization)
@@ -38,13 +39,13 @@ export interface Project {
   ownerLogo?: string;
   title: string;
   description: string;
-  role: string;
+  role?: string;
   link?: string;
   mediaLink?: string;
   teamMemberIds?: string[];
   invitedStudentIds?: string[];
   applicantIds?: string[]; // IDs of students who applied
-  status: 'davam edir' | 'tamamlanıb';
+  status: ProjectStatus;
   createdAt: any;
 }
 
