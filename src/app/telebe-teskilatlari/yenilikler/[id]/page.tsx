@@ -1,14 +1,13 @@
 'use client';
 import { useParams } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { StudentOrgUpdate, StudentOrganization } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Calendar, Building } from 'lucide-react';
 import DOMPurify from 'dompurify';
-import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
@@ -27,24 +26,25 @@ export default function StudentOrgUpdateDetailsPage() {
     const { data: update, isLoading: isUpdateLoading } = useDoc<StudentOrgUpdate>(updateDocRef);
 
     // Step 2: Once the update is fetched, use its organizationId to fetch the organization.
-    const orgDocRef = useMemoFirebase(() =>
-      firestore && update?.organizationId ? doc(firestore, 'student-organizations', update.organizationId) : null,
-      [firestore, update]
-    );
-    const { data: orgData, isLoading: isOrgLoading } = useDoc<StudentOrganization>(orgDocRef);
-    
     useEffect(() => {
-        if (orgData) {
-            setOrganization(orgData);
-        }
-    }, [orgData]);
+        const fetchOrg = async () => {
+            if (firestore && update?.organizationId) {
+                const orgRef = doc(firestore, 'student-organizations', update.organizationId);
+                const orgSnap = await getDoc(orgRef);
+                if (orgSnap.exists()) {
+                    setOrganization(orgSnap.data() as StudentOrganization);
+                }
+            }
+        };
+        fetchOrg();
+    }, [firestore, update]);
 
-    const isLoading = isUpdateLoading || (update && !orgData);
+    const isLoading = isUpdateLoading || (update && !organization);
 
     const sanitizedContent = update?.content && typeof window !== 'undefined'
         ? DOMPurify.sanitize(update.content)
         : update?.content;
-
+    
     if (isLoading) {
         return (
             <div className="container mx-auto max-w-4xl py-12 px-4">
@@ -64,19 +64,8 @@ export default function StudentOrgUpdateDetailsPage() {
         return <div className="text-center py-20">Yenilik tapılmadı və ya yüklənərkən xəta baş verdi.</div>;
     }
 
-    const pageTitle = `${update.title} | ${organization.name}`;
-    const description = update.content.replace(/<[^>]*>?/gm, '').substring(0, 155);
-
     return (
         <>
-            <Head>
-                <title>{pageTitle}</title>
-                <meta name="description" content={description} />
-                <meta property="og:title" content={pageTitle} />
-                <meta property="og:description" content={description} />
-                <meta property="og:image" content={update.coverImageUrl || organization.logoUrl || 'https://i.ibb.co/cXv2KzRR/q2.jpg'} />
-                <meta property="og:type" content="article" />
-            </Head>
             <article className="container mx-auto max-w-4xl py-8 md:py-12 px-4">
                 <header className="mb-8">
                     <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight mb-4">
