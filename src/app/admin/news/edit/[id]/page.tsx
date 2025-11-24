@@ -3,7 +3,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useAuth } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { News } from '@/types';
-import NewsEditForm from '../../edit-form';
+import NewsEditForm from './edit-form';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EditNewsPage() {
