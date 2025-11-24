@@ -14,7 +14,7 @@ const slugify = (text: string): string => {
     'ş': 's', 'Ş': 'S',
     'ü': 'u', 'Ü': 'U',
   };
-
+  
   return text
     .split('')
     .map(char => azeToEng[char] || char)
@@ -29,7 +29,7 @@ const slugify = (text: string): string => {
 
 // Fayl validasiyası
 const validateFile = (file: File, type: 'sekiller' | 'senedler') => {
-  const maxSize = 10 * 1024 * 1024; // 10MB
+  const maxSize = 20 * 1024 * 1024; // 20MB (10-dan 20-yə dəyişdim)
   
   const allowedTypes = {
     sekiller: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
@@ -48,7 +48,7 @@ const validateFile = (file: File, type: 'sekiller' | 'senedler') => {
   };
 
   if (file.size > maxSize) {
-    return { valid: false, error: 'Fayl həcmi 10MB-dan çox ola bilməz' };
+    return { valid: false, error: 'Fayl həcmi 20MB-dan çox ola bilməz' }; // Xəta mesajını da dəyişdim
   }
 
   if (!allowedTypes[type].includes(file.type)) {
@@ -91,7 +91,7 @@ export async function handleFileUpload(req: Request, type: 'sekiller' | 'senedle
     // Fayl adını hazırla
     const originalName = file.name || 'fayl';
     const safeName = slugify(path.parse(originalName).name);
-    const uniqueId = randomBytes(4).toString('hex'); // uuid əvəzinə crypto
+    const uniqueId = randomBytes(4).toString('hex');
     const extension = path.extname(originalName).toLowerCase() || '.dat';
     const newFilename = `${safeName}-${uniqueId}${extension}`;
     const filePath = path.join(uploadDir, newFilename);
@@ -102,7 +102,7 @@ export async function handleFileUpload(req: Request, type: 'sekiller' | 'senedle
 
     // URL qaytар
     const url = `/api/${type}/${newFilename}`;
-
+    
     return NextResponse.json({ 
       success: true, 
       url,
