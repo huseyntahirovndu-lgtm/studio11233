@@ -1,0 +1,600 @@
+{
+  "entities": {
+    "Student": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Student",
+      "type": "object",
+      "description": "Represents a student in the talent bank platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Student entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the student."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the student."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the student.",
+          "format": "email"
+        },
+        "faculty": {
+          "type": "string",
+          "description": "The faculty the student belongs to."
+        },
+        "major": {
+          "type": "string",
+          "description": "The student's major or specialization."
+        },
+        "courseYear": {
+          "type": "number",
+          "description": "The year of study the student is in (1-6)."
+        },
+        "profilePictureUrl": {
+          "type": "string",
+          "description": "URL of the student's profile picture.",
+          "format": "uri"
+        },
+        "talentScore": {
+          "type": "number",
+          "description": "The overall talent score of the student."
+        },
+        "category": {
+          "type": "string",
+          "description": "The student's primary talent category (STEM, Humanities, Arts, etc.)."
+        },
+        "successStory": {
+          "type": "string",
+          "description": "A short story or testimonial about the student's success."
+        },
+        "skillIds": {
+          "type": "array",
+          "description": "References to Skills. (Relationship: Student N:N Skill)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "projectIds": {
+          "type": "array",
+          "description": "References to Projects. (Relationship: Student 1:N Project)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "achievementIds": {
+          "type": "array",
+          "description": "References to Achievements. (Relationship: Student 1:N Achievement)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "socialLinkIds": {
+          "type": "array",
+          "description": "References to SocialLinks. (Relationship: Student 1:N SocialLink)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "faculty",
+        "major",
+        "courseYear"
+      ]
+    },
+    "Skill": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Skill",
+      "type": "object",
+      "description": "Represents a skill or ability a student possesses.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Skill entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the skill (e.g., 'Python', 'Graphic Design')."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Project": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Project",
+      "type": "object",
+      "description": "Represents a project a student has worked on.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Project entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N Project)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the project."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the project."
+        },
+        "role": {
+          "type": "string",
+          "description": "The student's role in the project."
+        },
+        "link": {
+          "type": "string",
+          "description": "A link to the project (e.g., GitHub repository, live demo).",
+          "format": "uri"
+        },
+        "mediaUrl": {
+          "type": "string",
+          "description": "URL to an image or video showcasing the project.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "title",
+        "description",
+        "role"
+      ]
+    },
+    "Achievement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Achievement",
+      "type": "object",
+      "description": "Represents an achievement or award a student has received.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Achievement entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N Achievement)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the competition or award."
+        },
+        "position": {
+          "type": "string",
+          "description": "The student's position or rank in the competition (e.g., '1st place', 'Finalist')."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date the achievement was earned.",
+          "format": "date-time"
+        },
+        "level": {
+          "type": "string",
+          "description": "The level of the competition (International, National, Regional, University)."
+        },
+        "certificateUrl": {
+          "type": "string",
+          "description": "URL to a certificate or proof of the achievement.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "name",
+        "position",
+        "date",
+        "level"
+      ]
+    },
+    "SocialLink": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SocialLink",
+      "type": "object",
+      "description": "Represents a social media or portfolio link for a student.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SocialLink entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N SocialLink)"
+        },
+        "platform": {
+          "type": "string",
+          "description": "The name of the social media platform (e.g., 'LinkedIn', 'GitHub')."
+        },
+        "url": {
+          "type": "string",
+          "description": "The URL to the student's profile on the platform.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "platform",
+        "url"
+      ]
+    },
+    "Organization": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Organization",
+      "type": "object",
+      "description": "Represents an organization that can search for and connect with students.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Organization entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the organization."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the organization.",
+          "format": "email"
+        },
+        "sector": {
+          "type": "string",
+          "description": "The sector the organization operates in."
+        },
+        "savedStudentIds": {
+          "type": "array",
+          "description": "References to Students that are saved by the Organization. (Relationship: Organization N:N Student)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "sector"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a category of talent (e.g., STEM, Humanities, Arts).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Category entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the category."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+     "Faculty": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Faculty",
+      "type": "object",
+      "description": "Represents a faculty within the university.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Faculty entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the faculty."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "StudentOrganization": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StudentOrganization",
+      "type": "object",
+      "description": "Represents a student-led organization within the university.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Student Organization entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the student organization."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the student organization's mission and activities."
+        },
+        "logoUrl": {
+          "type": "string",
+          "description": "URL of the organization's logo.",
+          "format": "uri"
+        },
+        "faculty": {
+          "type": "string",
+          "description": "The faculty the student organization is primarily associated with."
+        },
+        "leaderId": {
+          "type": "string",
+          "description": "The ID of the student who is the leader of the organization."
+        },
+        "memberIds": {
+          "type": "array",
+          "description": "An array of student IDs who are members of the organization.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "faculty",
+        "leaderId"
+      ]
+    },
+    "News": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "News",
+      "type": "object",
+      "description": "Represents a news article or blog post for the platform.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the news post." },
+        "slug": { "type": "string", "description": "URL-friendly slug for the news post." },
+        "title": { "type": "string", "description": "The title of the news post." },
+        "content": { "type": "string", "description": "The main content of the news post, can contain HTML." },
+        "coverImageUrl": { "type": "string", "format": "uri", "description": "URL for the cover image of the post." },
+        "authorId": { "type": "string", "description": "The ID of the admin user who created the post." },
+        "authorName": { "type": "string", "description": "The name of the admin user who created the post." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the post was created." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "The timestamp when the post was last updated." }
+      },
+      "required": ["id", "slug", "title", "content", "authorId", "createdAt"]
+    },
+    "StudentOrgUpdate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StudentOrgUpdate",
+      "type": "object",
+      "description": "Represents an update or news post from a student organization.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the update." },
+        "organizationId": { "type": "string", "description": "The ID of the student organization posting the update." },
+        "title": { "type": "string", "description": "The title of the update." },
+        "content": { "type": "string", "description": "The content of the update, can contain HTML." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the update was created." }
+      },
+      "required": ["id", "organizationId", "title", "content", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/students/{studentId}",
+        "definition": {
+          "entityName": "Student",
+          "schema": {
+            "$ref": "#/backend/entities/Student"
+          },
+          "description": "Stores student profile information.  Includes denormalized 'studentId' parameter for authorization independence.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/projects/{projectId}",
+        "definition": {
+          "entityName": "Project",
+          "schema": {
+            "$ref": "#/backend/entities/Project"
+          },
+          "description": "Stores project information for a specific student.  Includes denormalized 'studentId' parameter for authorization independence.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "projectId",
+              "description": "The unique identifier for the project."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/achievements/{achievementId}",
+        "definition": {
+          "entityName": "Achievement",
+          "schema": {
+            "$ref": "#/backend/entities/Achievement"
+          },
+          "description": "Stores achievement information for a specific student. Includes denormalized 'studentId' parameter for authorization independence.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "achievementId",
+              "description": "The unique identifier for the achievement."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/socialLinks/{socialLinkId}",
+        "definition": {
+          "entityName": "SocialLink",
+          "schema": {
+            "$ref": "#/backend/entities/SocialLink"
+          },
+          "description": "Stores social link information for a specific student. Includes denormalized 'studentId' parameter for authorization independence.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "socialLinkId",
+              "description": "The unique identifier for the social link."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/skills/{skillId}",
+        "definition": {
+          "entityName": "Skill",
+          "schema": {
+            "$ref": "#/backend/entities/Skill"
+          },
+          "description": "Stores information about skills.",
+          "params": [
+            {
+              "name": "skillId",
+              "description": "The unique identifier for the skill."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/organizations/{organizationId}",
+        "definition": {
+          "entityName": "Organization",
+          "schema": {
+            "$ref": "#/backend/entities/Organization"
+          },
+          "description": "Stores information about organizations.",
+          "params": [
+            {
+              "name": "organizationId",
+              "description": "The unique identifier for the organization."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores information about categories.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique identifier for the category."
+            }
+          ]
+        }
+      },
+       {
+        "path": "/faculties/{facultyId}",
+        "definition": {
+          "entityName": "Faculty",
+          "schema": {
+            "$ref": "#/backend/entities/Faculty"
+          },
+          "description": "Stores information about faculties.",
+          "params": [
+            {
+              "name": "facultyId",
+              "description": "The unique identifier for the faculty."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/student-organizations/{orgId}",
+        "definition": {
+          "entityName": "StudentOrganization",
+          "schema": {
+            "$ref": "#/backend/entities/StudentOrganization"
+          },
+          "description": "Stores information about student-led organizations.",
+          "params": [
+            {
+              "name": "orgId",
+              "description": "The unique identifier for the student organization."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/student-organizations/{orgId}/updates/{updateId}",
+        "definition": {
+          "entityName": "StudentOrgUpdate",
+          "schema": { "$ref": "#/backend/entities/StudentOrgUpdate" },
+          "description": "Stores updates for a specific student organization.",
+          "params": [
+            { "name": "orgId", "description": "The ID of the student organization." },
+            { "name": "updateId", "description": "The unique ID for the update." }
+          ]
+        }
+      },
+      {
+        "path": "/news/{newsId}",
+        "definition": {
+          "entityName": "News",
+          "schema": { "$ref": "#/backend/entities/News" },
+          "description": "Stores general news and blog posts for the platform.",
+          "params": [
+            { "name": "newsId", "description": "The unique identifier for the news post." }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "roles_admin",
+          "schema": {
+            "$ref": "#/backend/entities/Organization"
+          },
+          "description": "Stores user IDs who are admins. Existence of document grants admin role.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the admin user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the İstedad Mərkəzi (Talent Bank) platform, prioritizing security, scalability, and ease of debugging. The structure emphasizes authorization independence by denormalizing authorization data and segregating data based on access requirements. The user request specified a need for a student talent bank for the Naxçıvan Dövlət Universiteti, and the structure accommodates the described entities and application requirements, focusing on student profiles, skill management, organization interaction, and administrative oversight. I have not considered any requirements for the UI for messaging between students and organizations or any AI integrations. I have optimized the structure to best reflect the data models in the prompt. \n\n**Authorization Independence (CRITICAL):**\nTo achieve authorization independence and eliminate `get()` calls in security rules, the structure denormalizes authorization context. For instance, the `Project`, `Achievement`, and `SocialLink` subcollections under each student document inherently inherit the student's ownership. While not explicitly collaborative, if collaboration were introduced, membership maps (`members: {uid1: \"role\", uid2: \"role\"}`) would be denormalized into relevant subcollections to avoid hierarchical dependencies. This approach ensures that atomic operations (transactions/batches) are not broken and simplifies debugging.\n\n**Structural Segregation (Homogeneous Security Posture):**\nThe structure ensures that all documents within a collection share the same security requirements. For example, student profiles are stored in `/students/{studentId}`, while organization profiles are stored in `/organizations/{organizationId}`. There is no need to store draft and public student profiles in the same collection, removing the need for complex security rules that differentiate access based on document content. This segregation simplifies rules and enhances security.\n\n**Access Modeling (Standardization and Consistency):**\nThe structure uses consistent patterns for authorization:\n*   **Private Data:** User-owned data like projects, achievements, and social links are stored in hierarchical paths under the `/students/{studentId}` collection, enabling path-based ownership. For example, `/students/{studentId}/projects/{projectId}` ensures that only the student can manage their projects.\n*   **Collaborative Data:** If collaborative features were to be added (e.g., team projects), the Membership Map (`members: {uid1: \"role\", uid2: \"role\"}`) pattern would be used. This map would be denormalized into subcollections as needed.\n*   **Global Roles (DBAC):** Administrative roles are managed via existence checks in dedicated collections like `/roles_admin/{uid}`, allowing simple and efficient security rules based on role membership.\n\n**QAPs (Rules are not Filters):**\nThe structure supports secure `list` operations by ensuring that security rules do not act as filters. Segregation of data based on access needs and the use of membership maps (when needed) allow for efficient and secure listing of resources without exposing unauthorized data.\n\n**Invariants:**\nThe structure supports the integrity of ownership, timestamps, and denormalized data by enforcing strict naming conventions and predictable schemas. For example, all user-owned entities use `studentId` to denote ownership. The structure can be extended to support timestamps (e.g., `createdAt`, `updatedAt`) if required by the application."
+  }
+}

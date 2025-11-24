@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['"Poppins"', 'sans-serif'],
+        headline: ['"Poppins"', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
@@ -54,6 +54,20 @@ export default {
           '3': 'hsl(var(--chart-3))',
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
+        },
+        category: {
+          stem: 'hsl(var(--category-stem))',
+          humanitarian: 'hsl(var(--category-humanitarian))',
+          art: 'hsl(var(--category-art))',
+          sport: 'hsl(var(--category-sport))',
+          entrepreneurship: 'hsl(var(--category-entrepreneurship))',
+          technology: 'hsl(var(--category-technology))',
+        },
+        achievement: {
+          international: 'hsl(var(--achievement-international))',
+          republic: 'hsl(var(--achievement-republic))',
+          regional: 'hsl(var(--achievement-regional))',
+          university: 'hsl(var(--achievement-university))',
         },
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar-background))',

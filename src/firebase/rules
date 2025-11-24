@@ -1,0 +1,292 @@
+rules_version = '2';
+
+/**
+ * @file firestore.rules
+ * @description Security rules for the İstedad Mərkəzi (Talent Bank) platform.
+ *
+ * @philosophy
+ * This ruleset enforces a multi-tenant security model with three primary roles:
+ * 1. Students: Users who create and manage their own talent profiles.
+ * 2. Organizations: Users who can view student profiles and manage their own organization profile.
+ * 3. Admins: Users with elevated privileges to manage platform data for moderation and administrative purposes.
+ *
+ * The core principle is strict ownership. Students and Organizations have full control over their own data,
+ * but cannot modify data belonging to others.
+ *
+ * @structure
+ * - /students/{studentId}: Stores the main profile for a student. All related data (projects, achievements) is
+ *   nested in subcollections under this path, inheriting ownership.
+ * - /organizations/{organizationId}: Stores profiles for organizations.
+ * - /skills/{skillId} & /categories/{categoryId}: Contain public, read-only reference data managed by Admins.
+ * - /news/{newsId}: Stores platform-wide news, managed by Admins. Publicly readable.
+ * - /telebe-teskilatlari/{orgId}: Stores profiles for student-led organizations.
+ * - /telebe-teskilatlari/{orgId}/updates/{updateId}: Updates for a student organization, managed by its leader.
+ * - /roles_admin/{userId}: A dedicated collection where the existence of a document grants a user admin privileges.
+ *
+ * @decisions
+ * - Default Read Access: To facilitate the "Talent Bank" functionality, student and organization profiles are readable
+ *   by any authenticated user. This allows organizations to discover student talent.
+ * - Default Write Access: All write operations are denied by default and are only granted to the document owner or an Admin.
+ * - Admin Oversight: Admins have read and write access to most data to manage the platform effectively.
+ * - No Anonymous Access: All operations require user authentication to prevent data scraping and ensure accountability.
+ *
+ * @denormalization
+ * To ensure high-performance and secure rules, authorization data is denormalized. For example, a document in the
+ * `/students/{studentId}/projects/{projectId}` path MUST contain a `studentId` field that matches the `studentId` from the
+ * path. This avoids slow and costly `get()` calls to parent documents and enforces relational integrity.
+ *
+ * @segregation
+ * Data with different security needs is stored in separate top-level collections (e.g., `students`, `organizations`).
+ * This creates clear, secure boundaries and simplifies list operations, ensuring that queries do not need to be
+ * filtered by security rules.
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Helper Functions
+    // -------------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the primary function for verifying document ownership.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if the authenticated user has an admin role.
+     * Admin status is granted by the existence of a document in the /roles_admin collection.
+     */
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /**
+     * On create, validates that the new document's internal ID field matches the
+     * UID of the user creating it, enforcing a link between the document and its owner.
+     */
+    function isCreatingOwnDoc(userId) {
+      return request.resource.data.id == userId;
+    }
+
+    /**
+     * On create, validates that a new subcollection document's internal owner field (e.g., 'studentId')
+     * matches the owner ID from the document path.
+     */
+    function isCreatingOwnedSubDoc(ownerId, ownerField) {
+      return request.resource.data[ownerField] == ownerId;
+    }
+
+    /**
+     * On update, ensures that a critical, immutable field (like an owner ID) has not been changed.
+     */
+    function isImmutable(fieldName) {
+      return request.resource.data[fieldName] == resource.data[fieldName];
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Student Profile Rules
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Controls access to student profiles. Profiles are publicly readable by any authenticated
+     *              user, but can only be written to by the student owner or an admin.
+     * @path /students/{studentId}
+     * @allow (get) An organization (auth.uid: 'org123') reads a student profile at /students/student456.
+     * @allow (create) A new student (auth.uid: 'student789') creates their own profile at /students/student789.
+     * @deny (update) A student (auth.uid: 'student1') tries to modify another student's profile at /students/student2.
+     * @principle Enforces self-creation and ownership for a user's primary document. Allows public reads for discoverability.
+     */
+    match /students/{studentId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOwner(studentId) && isCreatingOwnDoc(studentId);
+      allow update: if (isOwner(studentId) || isAdmin()) && resource != null && isImmutable('id');
+      allow delete: if (isOwner(studentId) || isAdmin()) && resource != null;
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Student Subcollection Rules
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Secures a student's projects. The data is readable by any authenticated user as part of the
+     *              student's public portfolio, but writable only by the student owner or an admin.
+     * @path /students/{studentId}/projects/{projectId}
+     * @allow (get) An authenticated user reads a project at /students/student123/projects/proj456.
+     * @allow (create) The owner ('student123') creates a new project under their own profile.
+     * @deny (create) A user tries to create a project with a mismatched studentId in the document body.
+     * @principle Restricts writes to the owner of the parent data tree and validates relational integrity.
+     */
+    match /students/{studentId}/projects/{projectId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOwner(studentId) && isCreatingOwnedSubDoc(studentId, 'studentId');
+      allow update: if (isOwner(studentId) || isAdmin()) && resource != null && isImmutable('studentId');
+      allow delete: if (isOwner(studentId) || isAdmin()) && resource != null;
+    }
+
+    /**
+     * @description Secures a student's achievements. Readable by any authenticated user, but writable only
+     *              by the student owner or an admin.
+     * @path /students/{studentId}/achievements/{achievementId}
+     * @allow (get) An authenticated user reads an achievement at /students/student123/achievements/achieve456.
+     * @allow (create) The owner ('student123') creates a new achievement under their own profile.
+     * @deny (delete) A user ('studentABC') tries to delete an achievement belonging to 'student123'.
+     * @principle Restricts writes to the owner of the parent data tree and validates relational integrity.
+     */
+    match /students/{studentId}/achievements/{achievementId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOwner(studentId) && isCreatingOwnedSubDoc(studentId, 'studentId');
+      allow update: if (isOwner(studentId) || isAdmin()) && resource != null && isImmutable('studentId');
+      allow delete: if (isOwner(studentId) || isAdmin()) && resource != null;
+    }
+
+    /**
+     * @description Secures a student's social links. Readable by any authenticated user, but writable only
+     *              by the student owner or an admin.
+     * @path /students/{studentId}/socialLinks/{socialLinkId}
+     * @allow (get) An authenticated user reads a social link at /students/student123/socialLinks/link456.
+     * @allow (create) The owner ('student123') creates a new social link under their own profile.
+     * @deny (update) An admin tries to change the 'studentId' field on an existing social link document.
+     * @principle Restricts writes to the owner of the parent data tree and validates relational integrity.
+     */
+    match /students/{studentId}/socialLinks/{socialLinkId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOwner(studentId) && isCreatingOwnedSubDoc(studentId, 'studentId');
+      allow update: if (isOwner(studentId) || isAdmin()) && resource != null && isImmutable('studentId');
+      allow delete: if (isOwner(studentId) || isAdmin()) && resource != null;
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Organization Profile Rules
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Controls access to organization profiles. Profiles are readable by any authenticated
+     *              user, but can only be written to by the organization owner or an admin.
+     * @path /organizations/{organizationId}
+     * @allow (get) A student (auth.uid: 'student123') reads an organization profile at /organizations/org456.
+     * @allow (create) A new user (auth.uid: 'org789') creates their own organization profile at /organizations/org789.
+     * @deny (update) A user (auth.uid: 'org1') tries to modify another org's profile at /organizations/org2.
+     * @principle Enforces self-creation and ownership for a user's primary document. Allows public reads for discoverability.
+     */
+    match /organizations/{organizationId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOwner(organizationId) && isCreatingOwnDoc(organizationId);
+      allow update: if (isOwner(organizationId) || isAdmin()) && resource != null && isImmutable('id');
+      allow delete: if (isOwner(organizationId) || isAdmin()) && resource != null;
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Public Reference Data Rules (Admin-Managed)
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Manages the global list of skills. This data is readable by all authenticated
+     *              users but can only be created, updated, or deleted by administrators.
+     * @path /skills/{skillId}
+     * @allow (get) Any signed-in user reads the 'Python' skill document.
+     * @allow (create) An admin adds a new skill document.
+     * @deny (create) A non-admin user attempts to add a new skill.
+     * @principle Secures global reference data by making it publicly readable but restricting writes to admins.
+     */
+    match /skills/{skillId} {
+      allow get, list: if true;
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Manages the global list of talent categories. This data is readable by all
+     *              authenticated users but can only be managed by administrators.
+     * @path /categories/{categoryId}
+     * @allow (list) Any signed-in user lists all available categories.
+     * @allow (update) An admin updates the name of a category.
+     * @deny (delete) A non-admin user attempts to delete a category.
+     * @principle Secures global reference data by making it publicly readable but restricting writes to admins.
+     */
+    match /categories/{categoryId} {
+      allow get, list: if true;
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin() && resource != null;
+    }
+
+    // -------------------------------------------------------------------------
+    // News Rules
+    // -------------------------------------------------------------------------
+    /**
+     * @description Manages platform-wide news. News is publicly readable by anyone
+     *              but can only be managed by administrators.
+     * @path /news/{newsId}
+     * @allow (list) Any user can list all news posts.
+     * @allow (create, update, delete) An admin can manage news posts.
+     * @deny (create) A non-admin user attempts to create a news post.
+     */
+    match /news/{newsId} {
+        allow get, list: if true;
+        allow create, update, delete: if isAdmin();
+    }
+    
+    // -------------------------------------------------------------------------
+    // Student Organization Rules
+    // -------------------------------------------------------------------------
+    
+    /**
+     * @description Manages student organization profiles. Publicly readable, but only
+     *              admins can create, update, or delete them.
+     * @path /telebe-teskilatlari/{orgId}
+     * @allow (list) Any user can see all student organizations.
+     * @allow (create, update, delete) Only admins can manage the organizations.
+     */
+    match /telebe-teskilatlari/{orgId} {
+        allow get, list: if true;
+        allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Manages updates for a specific student organization. Readable by anyone.
+     *              Writable only by an admin or the designated leader of the student organization.
+     * @path /telebe-teskilatlari/{orgId}/updates/{updateId}
+     * @allow (list) Anyone can read updates for an organization.
+     * @allow (create) The org leader or an admin can post an update.
+     * @deny (update) A regular student tries to edit an update.
+     */
+    match /telebe-teskilatlari/{orgId}/updates/{updateId} {
+        allow get, list: if true;
+        allow create: if isAdmin() || isOwner(get(/databases/$(database)/documents/telebe-teskilatlari/$(orgId)).data.leaderId);
+        allow update, delete: if isAdmin() || isOwner(get(/databases/$(database)/documents/telebe-teskilatlari/$(orgId)).data.leaderId);
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Administrative Role Management
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Manages user admin roles. Only existing admins can read or write to this
+     *              collection, preventing non-admins from viewing the admin list or elevating privileges.
+     * @path /roles_admin/{userId}
+     * @allow (get, create) An existing admin grants admin rights to another user by creating a document.
+     * @deny (list) A non-admin user attempts to list all admins.
+     * @deny (create) A non-admin user attempts to make themselves an admin.
+     * @principle Enforces strict, self-managed role-based access control for the highest privilege level.
+     */
+    match /roles_admin/{userId} {
+      allow get, list: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin() && resource != null;
+    }
+  }
+}

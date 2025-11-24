@@ -10,24 +10,30 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      {
+       {
         protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
+        hostname: 'i.ibb.co',
       },
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
+        hostname: 'ndu.edu.az',
       },
+      {
+        protocol: 'https',
+        hostname: 'tec.ndu.edu.az',
+      },
+      {
+        protocol: 'https',
+        hostname: 'encrypted-tbn0.gstatic.com',
+      },
+       {
+        protocol: 'https',
+        hostname: 'istedadmerkezi.net',
+      }
     ],
   },
 };
