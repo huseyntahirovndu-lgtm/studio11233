@@ -1,8 +1,5 @@
 'use client';
-import {
-  MoreHorizontal,
-  PlusCircle,
-} from "lucide-react"
+import { MoreHorizontal, PlusCircle } from "lucide-react"
 import Link from "next/link";
 import { Button } from "@/components/ui/button"
 import {
@@ -69,14 +66,14 @@ export default function AdminNewsPage() {
     return (
         <Card>
             <CardHeader>
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <div>
                         <CardTitle>Xəbərlər</CardTitle>
                         <CardDescription>
                             Platformadakı ümumi xəbərləri və elanları idarə edin.
                         </CardDescription>
                     </div>
-                    <Button asChild>
+                    <Button asChild className="w-full sm:w-auto">
                         <Link href="/admin/news/add">
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Yeni Xəbər Yarat
@@ -97,7 +94,7 @@ export default function AdminNewsPage() {
                 <TableBody>
                     {isLoading ? (
                          <TableRow>
-                            <TableCell colSpan={4}>
+                            <TableCell colSpan={4} className="h-24 text-center">
                                 <div className="space-y-2">
                                     <Skeleton className="h-4 w-full" />
                                     <Skeleton className="h-4 w-full" />

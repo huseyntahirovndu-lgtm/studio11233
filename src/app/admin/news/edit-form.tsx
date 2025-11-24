@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useRef, ChangeEvent } from 'react';
+import { useState, useRef, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Firestore, collection, doc, serverTimestamp } from 'firebase/firestore';
+import { Firestore, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { AppUser, News, Admin } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Upload } from 'lucide-react';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { v4 as uuidv4 } from 'uuid';
 
 const formSchema = z.object({
   title: z.string().min(5, "Başlıq ən azı 5 hərf olmalıdır."),
@@ -32,8 +33,14 @@ interface EditNewsFormProps {
 }
 
 const generateSlug = (title: string) => {
+  const azeToEng: { [key: string]: string } = {
+    'ə': 'e', 'ç': 'c', 'ı': 'i', 'ğ': 'g', 'ö': 'o', 'ş': 's', 'ü': 'u',
+  };
   return title
     .toLowerCase()
+    .split('')
+    .map(char => azeToEng[char] || char)
+    .join('')
     .replace(/ /g, '-')
     .replace(/[^\w-]+/g, '');
 };
@@ -50,11 +57,17 @@ export default function NewsEditForm({ initialData, onSuccess, firestore, user }
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: initialData?.title || '',
-      content: initialData?.content || '',
-      coverImageUrl: initialData?.coverImageUrl || '',
+      title: '',
+      content: '',
+      coverImageUrl: '',
     },
   });
+
+  useEffect(() => {
+    if (initialData) {
+      form.reset(initialData);
+    }
+  }, [initialData, form]);
   
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -97,25 +110,29 @@ export default function NewsEditForm({ initialData, onSuccess, firestore, user }
           updatedAt: serverTimestamp(),
         };
         const newsDocRef = doc(firestore, 'news', initialData.id);
-        updateDocumentNonBlocking(newsDocRef, updateData);
+        await updateDoc(newsDocRef, updateData);
         toast({ title: 'Uğurlu', description: 'Xəbər uğurla yeniləndi.' });
         onSuccess(initialData.id);
       } else {
-        const slug = generateSlug(values.title);
+        const slugBase = generateSlug(values.title);
+        const newNewsId = uuidv4();
+        const slug = `${slugBase}-${newNewsId.substring(0, 5)}`;
+        
         const newsCollectionRef = collection(firestore, 'news');
+        const newNewsRef = doc(newsCollectionRef, newNewsId);
+
         const newNewsData = {
           ...values,
+          id: newNewsId,
           slug,
           authorId: user.id,
           authorName: `${(user as Admin).firstName} ${(user as Admin).lastName}`,
           createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
         };
-        const newDocRef = await addDocumentNonBlocking(newsCollectionRef, newNewsData);
-        if (newDocRef) {
-            updateDocumentNonBlocking(newDocRef, {id: newDocRef.id, slug: `${slug}-${newDocRef.id.substring(0,5)}`})
-        }
+        await addDocumentNonBlocking(newNewsRef, newNewsData);
         toast({ title: 'Uğurlu', description: 'Xəbər uğurla yaradıldı.' });
-        onSuccess(newDocRef?.id || '');
+        onSuccess(newNewsId);
       }
     } catch (error: any) {
       console.error("Xəbər yaradılarkən/yenilənərkən xəta:", error);
