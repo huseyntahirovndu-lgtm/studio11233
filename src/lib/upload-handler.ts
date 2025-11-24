@@ -1,4 +1,3 @@
-import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
@@ -40,7 +39,7 @@ export async function handleFileUpload(req: Request, type: 'sekiller' | 'senedle
     const buffer = Buffer.from(await file.arrayBuffer());
     await fs.writeFile(filePath, buffer);
 
-    const url = `/api/${type}/${newFilename}`;
+    const url = `/${type}/${newFilename}`;
 
     return NextResponse.json({ success: true, url });
   } catch (error: any) {
