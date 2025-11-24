@@ -26,8 +26,9 @@ export default function RootLayout({
   
   const isAdminRoute = pathname.startsWith('/admin');
   const isOrgPanelRoute = pathname.startsWith('/telebe-teskilati-paneli');
+  const isNotFoundPage = pathname === '/not-found';
 
-  const showHeaderFooter = !isAuthPage && !isAdminRoute && !isOrgPanelRoute;
+  const showHeaderFooter = !isAuthPage && !isAdminRoute && !isOrgPanelRoute && !isNotFoundPage;
 
   return (
     <html lang="az">
@@ -44,17 +45,11 @@ export default function RootLayout({
       <body className="font-body bg-background antialiased">
         <FirebaseClientProvider>
           <SessionProvider>
-            {isAuthPage ? (
-              <main className="flex min-h-screen items-center justify-center bg-background p-4">
-                {children}
-              </main>
-            ) : (
-              <div className="flex flex-col min-h-screen">
-                {showHeaderFooter && <Header />}
-                <main className="flex-1">{children}</main>
-                {showHeaderFooter && <Footer />}
-              </div>
-            )}
+            <div className="flex flex-col min-h-screen">
+              {showHeaderFooter && <Header />}
+              <main className="flex-1">{children}</main>
+              {showHeaderFooter && <Footer />}
+            </div>
             <Toaster />
           </SessionProvider>
         </FirebaseClientProvider>

@@ -81,56 +81,58 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle className="text-2xl">Giriş</CardTitle>
-        <CardDescription>
-          Hesabınıza daxil olmaq üçün məlumatlarınızı daxil edin.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>E-poçt</FormLabel>
-                  <FormControl>
-                    <Input placeholder="ad@nümunə.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Şifrə</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? 'Giriş edilir...' : 'Daxil ol'}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-      <CardFooter className="flex-col items-center justify-center text-sm">
-        <p>
-            Hesabınız yoxdur?{' '}
-            <Button variant="link" asChild className="p-0">
-               <Link href="/register-student">Tələbə kimi qeydiyyat</Link>
-            </Button>
-        </p>
-      </CardFooter>
-    </Card>
+    <main className="flex min-h-screen w-full items-center justify-center p-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl">Giriş</CardTitle>
+          <CardDescription>
+            Hesabınıza daxil olmaq üçün məlumatlarınızı daxil edin.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-poçt</FormLabel>
+                    <FormControl>
+                      <Input placeholder="ad@nümunə.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Şifrə</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'Giriş edilir...' : 'Daxil ol'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+        <CardFooter className="flex-col items-center justify-center text-sm">
+          <p>
+              Hesabınız yoxdur?{' '}
+              <Button variant="link" asChild className="p-0">
+                 <Link href="/register-student">Tələbə kimi qeydiyyat</Link>
+              </Button>
+          </p>
+        </CardFooter>
+      </Card>
+    </main>
   );
 }
