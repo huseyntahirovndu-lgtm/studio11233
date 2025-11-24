@@ -1,5 +1,6 @@
+import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -27,9 +28,7 @@ export async function handleFileUpload(req: Request, type: 'sekiller' | 'senedle
 
     const uploadDir = path.join(process.cwd(), 'public', 'uploads', type);
 
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    await fs.mkdir(uploadDir, { recursive: true });
     
     const originalName = file.name || 'fayl';
     const safeName = slugify(path.parse(originalName).name);
@@ -39,7 +38,7 @@ export async function handleFileUpload(req: Request, type: 'sekiller' | 'senedle
     const filePath = path.join(uploadDir, newFilename);
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
+    await fs.writeFile(filePath, buffer);
 
     const url = `/api/${type}/${newFilename}`;
 
