@@ -44,6 +44,27 @@ import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking
 import { collection, query, orderBy, doc } from "firebase/firestore";
 import { format } from 'date-fns';
 
+function safeFormatDate(date: any): string {
+    if (!date) return '-';
+    // Firestore Timestamp
+    if (date && typeof date.toDate === 'function') {
+        return format(date.toDate(), 'dd.MM.yyyy');
+    }
+    // ISO string or number
+    try {
+        const d = new Date(date);
+        // Check if date is valid
+        if (!isNaN(d.getTime())) {
+            return format(d, 'dd.MM.yyyy');
+        }
+    } catch (e) {
+        // Ignore parsing errors
+    }
+    // If it's a string that's not a valid date, return as is or a placeholder
+    return typeof date === 'string' ? date : '-';
+}
+
+
 export default function AdminNewsPage() {
     const { toast } = useToast();
     const firestore = useFirestore();
@@ -103,7 +124,7 @@ export default function AdminNewsPage() {
                             <TableCell className="font-medium">{item.title}</TableCell>
                             <TableCell className="hidden md:table-cell">{item.authorName}</TableCell>
                             <TableCell className="hidden md:table-cell">
-                               {item.createdAt?.toDate ? format(item.createdAt.toDate(), 'dd.MM.yyyy') : '-'}
+                               {safeFormatDate(item.createdAt)}
                             </TableCell>
                             <TableCell className="text-right">
                                <DropdownMenu>

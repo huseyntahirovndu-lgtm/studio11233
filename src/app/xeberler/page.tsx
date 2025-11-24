@@ -8,6 +8,27 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { format } from 'date-fns';
 
+function safeFormatDate(date: any): string {
+    if (!date) return '-';
+    // Firestore Timestamp
+    if (date && typeof date.toDate === 'function') {
+        return format(date.toDate(), 'dd MMMM, yyyy');
+    }
+    // ISO string or number
+    try {
+        const d = new Date(date);
+        // Check if date is valid
+        if (!isNaN(d.getTime())) {
+            return format(d, 'dd MMMM, yyyy');
+        }
+    } catch (e) {
+        // Ignore parsing errors
+    }
+    // If it's a string that's not a valid date, return as is or a placeholder
+    return typeof date === 'string' ? date : '-';
+}
+
+
 function NewsCardSkeleton() {
     return (
         <Card className="overflow-hidden">
@@ -64,7 +85,7 @@ export default function NewsPage() {
                                 <CardHeader>
                                     <CardTitle className="text-xl group-hover:text-primary transition-colors">{item.title}</CardTitle>
                                     <CardDescription>
-                                        {item.createdAt?.toDate ? format(item.createdAt.toDate(), 'dd MMMM, yyyy') : '-'}
+                                        {safeFormatDate(item.createdAt)}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex-grow">

@@ -45,13 +45,34 @@ import { collection, query, orderBy, doc, writeBatch } from "firebase/firestore"
 import { format } from 'date-fns';
 import { useStudentOrg } from "@/app/(student-org-panel)/layout";
 
+
+function safeFormatDate(date: any): string {
+    if (!date) return '-';
+    // Firestore Timestamp
+    if (date && typeof date.toDate === 'function') {
+        return format(date.toDate(), 'dd.MM.yyyy');
+    }
+    // ISO string or number
+    try {
+        const d = new Date(date);
+        // Check if date is valid
+        if (!isNaN(d.getTime())) {
+            return format(d, 'dd.MM.yyyy');
+        }
+    } catch (e) {
+        // Ignore parsing errors
+    }
+    // If it's a string that's not a valid date, return as is or a placeholder
+    return typeof date === 'string' ? date : '-';
+}
+
 export default function OrgUpdatesPage() {
     const { toast } = useToast();
     const firestore = useFirestore();
     const { organization } = useStudentOrg();
 
     const updatesQuery = useMemoFirebase(() => 
-        organization ? query(collection(firestore, `student-organizations/${organization.id}/updates`), orderBy("createdAt", "desc")) : null, 
+        organization ? query(collection(firestore, `users/${organization.id}/updates`), orderBy("createdAt", "desc")) : null, 
         [firestore, organization]
     );
     const { data: updates, isLoading } = useCollection<StudentOrgUpdate>(updatesQuery);
@@ -61,7 +82,7 @@ export default function OrgUpdatesPage() {
 
         const batch = writeBatch(firestore);
 
-        const subCollectionDocRef = doc(firestore, `student-organizations/${organization.id}/updates`, updateId);
+        const subCollectionDocRef = doc(firestore, `users/${organization.id}/updates`, updateId);
         const topLevelDocRef = doc(firestore, 'student-org-updates', updateId);
 
         batch.delete(subCollectionDocRef);
@@ -113,7 +134,7 @@ export default function OrgUpdatesPage() {
                         <TableRow key={item.id}>
                             <TableCell className="font-medium">{item.title}</TableCell>
                             <TableCell className="hidden md:table-cell">
-                               {item.createdAt?.toDate ? format(item.createdAt.toDate(), 'dd.MM.yyyy') : '-'}
+                               {safeFormatDate(item.createdAt)}
                             </TableCell>
                             <TableCell className="text-right">
                                <DropdownMenu>
