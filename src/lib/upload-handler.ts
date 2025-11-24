@@ -1,19 +1,61 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { randomBytes } from 'crypto';
 
-const slugify = (text: string) => {
+// Azərbaycan hərflərini ingilis hərflərinə çevir
+const slugify = (text: string): string => {
   const azeToEng: { [key: string]: string } = {
-    'ə': 'e', 'ç': 'c', 'ı': 'i', 'ğ': 'g', 'ö': 'o', 'ş': 's', 'ü': 'u',
+    'ə': 'e', 'Ə': 'E',
+    'ç': 'c', 'Ç': 'C',
+    'ı': 'i', 'I': 'I',
+    'ğ': 'g', 'Ğ': 'G',
+    'ö': 'o', 'Ö': 'O',
+    'ş': 's', 'Ş': 'S',
+    'ü': 'u', 'Ü': 'U',
   };
+
   return text
-    .toLowerCase()
     .split('')
     .map(char => azeToEng[char] || char)
     .join('')
-    .replace(/ /g, '-')
-    .replace(/[^\w-]+/g, '');
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+};
+
+// Fayl validasiyası
+const validateFile = (file: File, type: 'sekiller' | 'senedler') => {
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  
+  const allowedTypes = {
+    sekiller: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
+    senedler: [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ],
+  };
+
+  if (file.size > maxSize) {
+    return { valid: false, error: 'Fayl həcmi 10MB-dan çox ola bilməz' };
+  }
+
+  if (!allowedTypes[type].includes(file.type)) {
+    return { 
+      valid: false, 
+      error: type === 'sekiller' 
+        ? 'Yalnız şəkil faylları (JPG, PNG, WEBP, GIF) yükləyə bilərsiniz' 
+        : 'Yalnız sənəd faylları (PDF, DOC, DOCX, XLS, XLSX) yükləyə bilərsiniz'
+    };
+  }
+
+  return { valid: true };
 };
 
 export async function handleFileUpload(req: Request, type: 'sekiller' | 'senedler') {
@@ -22,28 +64,53 @@ export async function handleFileUpload(req: Request, type: 'sekiller' | 'senedle
     const file = formData.get('file') as File | null;
 
     if (!file) {
-      return NextResponse.json({ success: false, error: 'Fayl tapılmadı' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: 'Fayl tapılmadı' }, 
+        { status: 400 }
+      );
     }
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', type);
+    // Fayl validasiyası
+    const validation = validateFile(file, type);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { success: false, error: validation.error }, 
+        { status: 400 }
+      );
+    }
 
+    // Yükləmə qovluğunu yarat
+    const uploadDir = path.join(process.cwd(), 'api', type);
     await fs.mkdir(uploadDir, { recursive: true });
-    
+
+    // Fayl adını hazırla
     const originalName = file.name || 'fayl';
     const safeName = slugify(path.parse(originalName).name);
-    const uniqueId = uuidv4().substring(0, 8);
-    const extension = path.extname(originalName) || '.dat';
+    const uniqueId = randomBytes(4).toString('hex'); // uuid əvəzinə crypto
+    const extension = path.extname(originalName).toLowerCase() || '.dat';
     const newFilename = `${safeName}-${uniqueId}${extension}`;
     const filePath = path.join(uploadDir, newFilename);
 
+    // Faylı yaz
     const buffer = Buffer.from(await file.arrayBuffer());
     await fs.writeFile(filePath, buffer);
 
-    const url = `/${type}/${newFilename}`;
+    // URL qaytар
+    const url = `/api/${type}/${newFilename}`;
 
-    return NextResponse.json({ success: true, url });
+    return NextResponse.json({ 
+      success: true, 
+      url,
+      filename: newFilename,
+      size: file.size,
+      type: file.type
+    });
+
   } catch (error: any) {
     console.error(`${type} yükləmə xətası:`, error);
-    return NextResponse.json({ success: false, error: `Server xətası: ${error.message}` }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Server xətası baş verdi' }, 
+      { status: 500 }
+    );
   }
 }
