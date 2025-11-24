@@ -11,6 +11,7 @@ import DOMPurify from 'dompurify';
 import { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 function NewsDetailsLoading() {
     return (
