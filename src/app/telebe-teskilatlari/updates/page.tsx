@@ -38,22 +38,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import type { StudentOrganization, StudentOrgUpdate } from "@/types";
+import type { StudentOrgUpdate } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, doc, writeBatch } from "firebase/firestore";
 import { format } from 'date-fns';
-import { useAuth } from "@/hooks/use-auth";
+import { useStudentOrg } from "@/app/(student-org-panel)/layout";
 
 export default function OrgUpdatesPage() {
     const { toast } = useToast();
     const firestore = useFirestore();
-    const { user } = useAuth();
-    const organization = user as StudentOrganization | null;
+    const { organization } = useStudentOrg();
 
     const updatesQuery = useMemoFirebase(() => 
-        organization ? query(collection(firestore, `student-organizations/${organization.id}/updates`), orderBy("createdAt", "desc")) : null, 
-        [firestore, organization]
+        organization ? query(collection(firestore, `users/${organization.id}/updates`), orderBy("createdAt", "desc")) : null, 
+        [firestore, organization?.id]
     );
     const { data: updates, isLoading } = useCollection<StudentOrgUpdate>(updatesQuery);
 
@@ -62,7 +61,7 @@ export default function OrgUpdatesPage() {
 
         const batch = writeBatch(firestore);
 
-        const subCollectionDocRef = doc(firestore, `student-organizations/${organization.id}/updates`, updateId);
+        const subCollectionDocRef = doc(firestore, `users/${organization.id}/updates`, updateId);
         const topLevelDocRef = doc(firestore, 'student-org-updates', updateId);
 
         batch.delete(subCollectionDocRef);

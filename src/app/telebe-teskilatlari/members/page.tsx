@@ -35,7 +35,7 @@ export default function OrganizationMembersPage() {
 
   const membersQuery = useMemoFirebase(
     () => (organization?.memberIds && organization.memberIds.length > 0 ? query(collection(firestore, 'users'), where(documentId(), 'in', organization.memberIds)) : null),
-    [firestore, organization]
+    [firestore, organization?.memberIds]
   );
   const { data: members, isLoading: membersLoading } = useCollection<Student>(membersQuery);
 
@@ -51,7 +51,7 @@ export default function OrganizationMembersPage() {
   const handleAddMember = async () => {
     if (!organization || !selectedStudentId) return;
     setIsAddingMember(true);
-    const orgDocRef = doc(firestore, 'student-organizations', organization.id);
+    const orgDocRef = doc(firestore, 'users', organization.id);
     const newMemberIds = [...(organization.memberIds || []), selectedStudentId];
 
     await updateDocumentNonBlocking(orgDocRef, { memberIds: newMemberIds });
@@ -62,7 +62,7 @@ export default function OrganizationMembersPage() {
   
   const handleRemoveMember = async (memberId: string) => {
     if(!organization) return;
-    const orgDocRef = doc(firestore, 'student-organizations', organization.id);
+    const orgDocRef = doc(firestore, 'users', organization.id);
     const newMemberIds = organization.memberIds.filter(id => id !== memberId);
     
     await updateDocumentNonBlocking(orgDocRef, { memberIds: newMemberIds });
