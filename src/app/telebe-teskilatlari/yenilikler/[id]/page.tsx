@@ -29,7 +29,7 @@ export default function StudentOrgUpdateDetailsPage() {
     useEffect(() => {
         const fetchOrg = async () => {
             if (firestore && update?.organizationId) {
-                const orgRef = doc(firestore, 'student-organizations', update.organizationId);
+                const orgRef = doc(firestore, 'users', update.organizationId);
                 const orgSnap = await getDoc(orgRef);
                 if (orgSnap.exists()) {
                     setOrganization(orgSnap.data() as StudentOrganization);

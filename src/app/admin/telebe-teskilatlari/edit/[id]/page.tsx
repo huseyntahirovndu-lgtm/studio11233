@@ -15,14 +15,13 @@ export default function EditStudentOrgPage() {
     const { toast } = useToast();
     
     const orgId = typeof id === 'string' ? id : '';
-    const orgDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'student-organizations', orgId) : null, [firestore, orgId]);
+    const orgDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'users', orgId) : null, [firestore, orgId]);
     const { data: org, isLoading } = useDoc<StudentOrganization>(orgDocRef);
 
     const handleSave = async (data: any) => {
         if (!orgDocRef) return false;
         
-        // Ensure fields that are no longer on the form are not accidentally overwritten with undefined
-        const { leaderId, faculty, ...updateData } = data;
+        const { ...updateData } = data;
 
         await updateDocumentNonBlocking(orgDocRef, updateData);
         toast({ title: 'Uğurlu', description: 'Məlumatlar yeniləndi.' });

@@ -34,11 +34,10 @@ function OrgDetailsLoading() {
 export default function StudentOrgDetailsPage() {
   const { id } = useParams();
   const firestore = useFirestore();
-  const { user: currentUser } = useAuth();
 
   const orgId = typeof id === 'string' ? id : '';
 
-  const orgDocRef = useMemoFirebase(() => (firestore && orgId ? doc(firestore, 'student-organizations', orgId) : null), [firestore, orgId]);
+  const orgDocRef = useMemoFirebase(() => (firestore && orgId ? doc(firestore, 'users', orgId) : null), [firestore, orgId]);
   const { data: organization, isLoading: orgLoading } = useDoc<StudentOrganization>(orgDocRef);
   
   const updatesQuery = useMemoFirebase(

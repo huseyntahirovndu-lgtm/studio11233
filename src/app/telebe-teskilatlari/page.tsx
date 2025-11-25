@@ -12,7 +12,7 @@ export default function StudentOrganizationsPage() {
   const firestore = useFirestore();
 
   const studentOrgsQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'student-organizations'), where('status', '==', 'təsdiqlənmiş')) : null),
+    () => (firestore ? query(collection(firestore, 'users'), where('status', '==', 'təsdiqlənmiş'), where('role', '==', 'student-organization')) : null),
     [firestore]
   );
   const { data: studentOrgs, isLoading } = useCollection<StudentOrganization>(studentOrgsQuery);
