@@ -1,25 +1,23 @@
-'use client';
-import { usePathname } from 'next/navigation';
+import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { SessionProvider } from '@/hooks/use-auth';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
+import AppLayoutClient from './layout-client';
+
+export const metadata: Metadata = {
+  title: 'İstedad Mərkəzi | Naxçıvan Dövlət Universiteti',
+  description: 'Naxçıvan Dövlət Universitetinin istedadlı tələbələri üçün rəqəmsal platforma.',
+  icons: {
+    icon: '/favicon.ico',
+  }
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
-  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register-student') || pathname.startsWith('/register-organization');
-  
-  const isAdminRoute = pathname.startsWith('/admin');
-  const isOrgPanelRoute = pathname.startsWith('/telebe-teskilati-paneli');
-  const isNotFoundPage = pathname === '/not-found';
-
-  const showHeaderFooter = !isAuthPage && !isAdminRoute && !isOrgPanelRoute && !isNotFoundPage;
 
   return (
     <html lang="az">
@@ -32,11 +30,9 @@ export default function RootLayout({
       <body className="font-body bg-background antialiased">
         <FirebaseClientProvider>
           <SessionProvider>
-            <div className="flex flex-col min-h-screen">
-              {showHeaderFooter && <Header />}
-              <main className="flex-1">{children}</main>
-              {showHeaderFooter && <Footer />}
-            </div>
+             <AppLayoutClient>
+                {children}
+             </AppLayoutClient>
             <Toaster />
           </SessionProvider>
         </FirebaseClientProvider>
