@@ -37,7 +37,7 @@ export default function AdminDashboard() {
   );
   
   const studentOrgsQuery = useMemoFirebase(
-    () => (firestore && adminUser?.role === 'admin') ? query(collection(firestore, "student-organizations")) : null,
+    () => (firestore && adminUser?.role === 'admin') ? query(collection(firestore, "users"), where("role", "==", "student-organization")) : null,
     [firestore, adminUser?.role]
   );
   
