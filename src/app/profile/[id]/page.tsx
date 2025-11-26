@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import NextImage from 'next/image';
-import { useDoc, useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { useDoc, useCollectionOptimized, useFirestore, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, where, getDoc, writeBatch } from 'firebase/firestore';
 
 
@@ -53,10 +53,10 @@ export default function ProfilePage() {
   const orgProjectsQuery = useMemoFirebase(() => organization?.id ? query(collection(firestore, 'projects'), where('studentId', '==', organization.id)) : null, [firestore, organization?.id]);
 
   const { data: student, isLoading: studentLoading } = useDoc<Student>(studentDocRef);
-  const { data: projectsData, isLoading: projectsLoading } = useCollection<Project>(projectsQuery);
-  const { data: achievements, isLoading: achievementsLoading } = useCollection<Achievement>(achievementsQuery);
-  const { data: certificates, isLoading: certificatesLoading } = useCollection<Certificate>(certificatesQuery);
-  const { data: organizationProjects } = useCollection<Project>(orgProjectsQuery);
+  const { data: projectsData, isLoading: projectsLoading } = useCollectionOptimized<Project>(projectsQuery, { enableCache: true, disableRealtimeOnInit: true });
+  const { data: achievements, isLoading: achievementsLoading } = useCollectionOptimized<Achievement>(achievementsQuery, { enableCache: true, disableRealtimeOnInit: true });
+  const { data: certificates, isLoading: certificatesLoading } = useCollectionOptimized<Certificate>(certificatesQuery, { enableCache: true, disableRealtimeOnInit: true });
+  const { data: organizationProjects } = useCollectionOptimized<Project>(orgProjectsQuery, { enableCache: true, disableRealtimeOnInit: true });
 
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [isInviteDialogOpen, setInviteDialogOpen] = useState(false);

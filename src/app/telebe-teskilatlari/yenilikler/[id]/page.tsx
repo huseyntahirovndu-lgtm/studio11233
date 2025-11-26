@@ -1,7 +1,7 @@
 'use client';
 import { useParams } from 'next/navigation';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase, useCollectionOptimized } from '@/firebase';
+import { doc, collection, query, where, limit } from 'firebase/firestore';
 import { StudentOrgUpdate, StudentOrganization } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
@@ -23,17 +23,23 @@ export default function StudentOrgUpdateDetailsPage() {
     );
     const { data: update, isLoading: isUpdateLoading } = useDoc<StudentOrgUpdate>(updateDocRef);
 
-    const orgDocRef = useMemoFirebase(() =>
-      firestore && update?.organizationId ? doc(firestore, 'student-organizations', update.organizationId) : null,
+    const orgQuery = useMemoFirebase(() =>
+      firestore && update?.organizationId ? query(collection(firestore, 'users'), where('id', '==', update.organizationId), where('role', '==', 'student-organization'), limit(1)) : null,
       [firestore, update?.organizationId]
     );
-    const { data: organization, isLoading: isOrgLoading } = useDoc<StudentOrganization>(orgDocRef);
+    const { data: orgData, isLoading: isOrgLoading } = useCollectionOptimized<StudentOrganization>(orgQuery);
+    const organization = orgData?.[0];
     
     const isLoading = isUpdateLoading || (update && !organization);
 
-    const sanitizedContent = update?.content && typeof window !== 'undefined'
-        ? DOMPurify.sanitize(update.content)
-        : update?.content;
+    const [sanitizedContent, setSanitizedContent] = useState('');
+
+     useEffect(() => {
+        if (update?.content && typeof window !== 'undefined') {
+            setSanitizedContent(DOMPurify.sanitize(update.content));
+        }
+    }, [update?.content]);
+
 
     if (isLoading) {
         return (

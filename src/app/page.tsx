@@ -19,7 +19,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
+import { useCollectionOptimized, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { selectTopStories } from '@/app/actions';
 import { format } from 'date-fns';
@@ -65,10 +65,10 @@ export default function HomePage() {
   const categoriesQuery = useMemoFirebase(() => collection(firestore, "categories"), [firestore]);
   const newsQuery = useMemoFirebase(() => query(collection(firestore, 'news'), orderBy('createdAt', 'desc'), limit(3)), [firestore]);
 
-  const { data: students, isLoading: studentsLoading } = useCollection<Student>(studentsQuery);
-  const { data: studentOrgs, isLoading: studentOrgsLoading } = useCollection<StudentOrganization>(studentOrgsQuery);
-  const { data: categories, isLoading: categoriesLoading } = useCollection<CategoryData>(categoriesQuery);
-  const { data: latestNews, isLoading: newsLoading } = useCollection<News>(newsQuery);
+  const { data: students, isLoading: studentsLoading } = useCollectionOptimized<Student>(studentsQuery, { enableCache: true, disableRealtimeOnInit: true });
+  const { data: studentOrgs, isLoading: studentOrgsLoading } = useCollectionOptimized<StudentOrganization>(studentOrgsQuery, { enableCache: true, disableRealtimeOnInit: true });
+  const { data: categories, isLoading: categoriesLoading } = useCollectionOptimized<CategoryData>(categoriesQuery, { enableCache: true, disableRealtimeOnInit: true });
+  const { data: latestNews, isLoading: newsLoading } = useCollectionOptimized<News>(newsQuery, { enableCache: true, disableRealtimeOnInit: true });
 
   const [topTalents, setTopTalents] = useState<Student[]>([]);
   const [newMembers, setNewMembers] = useState<Student[]>([]);
@@ -125,30 +125,14 @@ export default function HomePage() {
         
         if (storiesToConsider.length === 0) return;
 
-        if (storiesToConsider.length <= 2) {
-            setSuccessStories(storiesToConsider.map(s => ({
-                studentId: s.id,
-                name: `${s.firstName} ${s.lastName}`,
-                faculty: s.faculty,
-                story: s.successStory,
-                profilePictureUrl: s.profilePictureUrl
-            })));
-            return;
-        }
-
-        try {
-            const result = await selectTopStories({ stories: storiesToConsider });
-            setSuccessStories(result.selectedStories.map(s => ({...s, profilePictureUrl: storiesToConsider.find(stc => stc.id === s.studentId)?.profilePictureUrl})));
-        } catch (error) {
-            console.error("AI story selection failed, using fallback:", error);
-            setSuccessStories(storiesToConsider.slice(0, 2).map(s => ({
-                 studentId: s.id,
-                 name: `${s.firstName} ${s.lastName}`,
-                 faculty: s.faculty,
-                 story: s.successStory,
-                 profilePictureUrl: s.profilePictureUrl
-            })));
-        }
+        // Fallback: Just take the first two stories without calling the AI
+        setSuccessStories(storiesToConsider.slice(0, 2).map(s => ({
+            studentId: s.id,
+            name: `${s.firstName} ${s.lastName}`,
+            faculty: s.faculty,
+            story: s.successStory,
+            profilePictureUrl: s.profilePictureUrl
+        })));
     };
     fetchStories();
 
@@ -268,7 +252,7 @@ export default function HomePage() {
                              )}
                              <CardHeader>
                                <CardTitle className="text-lg group-hover:text-primary transition-colors">{newsItem.title}</CardTitle>
-                               <CardDescription>{newsItem.createdAt ? format(newsItem.createdAt.toDate(), 'dd MMMM, yyyy') : ''}</CardDescription>
+                               <CardDescription>{newsItem.createdAt?.toDate ? format(newsItem.createdAt.toDate(), 'dd MMMM, yyyy') : ''}</CardDescription>
                              </CardHeader>
                              <CardContent className="flex-grow">
                                <p className="text-sm text-muted-foreground line-clamp-3">{newsItem.content.replace(/<[^>]*>?/gm, '')}</p>

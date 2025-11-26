@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { StudentOrganization } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase";
+import { useCollectionOptimized, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, query, doc, where } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 
@@ -49,7 +49,10 @@ export default function AdminStudentOrgsPage() {
     const firestore = useFirestore();
 
     const orgsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, "users"), where("role", "==", "student-organization")) : null, [firestore]);
-    const { data: organizations, isLoading } = useCollection<StudentOrganization>(orgsQuery);
+    const { data: organizations, isLoading } = useCollectionOptimized<StudentOrganization>(orgsQuery, {
+      enableCache: true,
+      disableRealtimeOnInit: true
+    });
 
     const handleDelete = (orgId: string) => {
         if (!firestore) return;

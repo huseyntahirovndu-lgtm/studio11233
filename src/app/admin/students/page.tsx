@@ -52,7 +52,7 @@ import {
 import { Input } from "@/components/ui/input";
 import type { Student, StudentStatus, FacultyData, AppUser } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { useCollection, useFirestore, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
+import { useCollectionOptimized, useFirestore, useMemoFirebase, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
 
 export default function AdminStudentsPage() {
@@ -69,8 +69,14 @@ export default function AdminStudentsPage() {
     [firestore]
   );
 
-  const { data: students, isLoading: usersLoading } = useCollection<Student>(allUsersQuery);
-  const { data: faculties, isLoading: facultiesLoading } = useCollection<FacultyData>(facultiesQuery);
+  const { data: students, isLoading: usersLoading } = useCollectionOptimized<Student>(allUsersQuery, {
+    enableCache: true,
+    disableRealtimeOnInit: true
+  });
+  const { data: faculties, isLoading: facultiesLoading } = useCollectionOptimized<FacultyData>(facultiesQuery, {
+    enableCache: true,
+    disableRealtimeOnInit: true
+  });
 
 
   const [activeTab, setActiveTab] = useState<StudentStatus | 'all'>('all');
@@ -217,7 +223,7 @@ export default function AdminStudentsPage() {
                               {student.talentScore || 'N/A'}
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
-                              {student.createdAt ? new Date(student.createdAt).toLocaleDateString() : '-'}
+                              {student.createdAt && typeof student.createdAt === 'string' ? new Date(student.createdAt).toLocaleDateString() : '-'}
                           </TableCell>
                           <TableCell>
                               <DropdownMenu>

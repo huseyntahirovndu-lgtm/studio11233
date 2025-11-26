@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { StudentOrgUpdate } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollectionOptimized, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, doc, writeBatch } from "firebase/firestore";
 import { format } from 'date-fns';
 import { useStudentOrg } from "@/app/(student-org-panel)/layout";
@@ -54,7 +54,10 @@ export default function OrgUpdatesPage() {
         organization?.id ? query(collection(firestore, `users/${organization.id}/updates`), orderBy("createdAt", "desc")) : null, 
         [firestore, organization?.id]
     );
-    const { data: updates, isLoading } = useCollection<StudentOrgUpdate>(updatesQuery);
+    const { data: updates, isLoading } = useCollectionOptimized<StudentOrgUpdate>(updatesQuery, {
+      enableCache: true,
+      disableRealtimeOnInit: true
+    });
 
     const handleDelete = async (updateId: string) => {
         if (!organization || !firestore) return;

@@ -11,7 +11,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getProfileRecommendations } from '@/app/actions';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollectionOptimized, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc, getDoc, getDocs, updateDoc, writeBatch } from 'firebase/firestore';
 
 
@@ -96,7 +96,7 @@ export default function StudentDashboard() {
     }, [user, loading, router]);
     
     const invitationsQuery = useMemoFirebase(() => studentProfile?.id ? query(collection(firestore, `users/${studentProfile.id}/invitations`), where('status', '==', 'gözləyir')) : null, [firestore, studentProfile?.id]);
-    const { data: invitations, isLoading: invitationsLoading } = useCollection<Invitation>(invitationsQuery as any);
+    const { data: invitations, isLoading: invitationsLoading } = useCollectionOptimized<Invitation>(invitationsQuery as any, { enableCache: true, disableRealtimeOnInit: true });
     const [enrichedInvitations, setEnrichedInvitations] = useState<EnrichedInvitation[]>([]);
 
     useEffect(() => {

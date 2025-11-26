@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table"
 import Link from "next/link";
 import { Student, StudentOrganization } from "@/types";
-import { useCollection, useFirestore, useMemoFirebase, useAuth } from "@/firebase";
+import { useCollectionOptimized, useFirestore, useMemoFirebase, useAuth } from "@/firebase";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 
 export default function AdminDashboard() {
@@ -51,9 +51,18 @@ export default function AdminDashboard() {
     [firestore, adminUser?.role]
   );
 
-  const { data: students, isLoading: studentsLoading } = useCollection<Student>(studentsQuery);
-  const { data: studentOrgs, isLoading: orgsLoading } = useCollection<StudentOrganization>(studentOrgsQuery);
-  const { data: recentStudents, isLoading: recentStudentsLoading } = useCollection<Student>(recentStudentsQuery);
+  const { data: students, isLoading: studentsLoading } = useCollectionOptimized<Student>(studentsQuery, {
+    enableCache: true,
+    disableRealtimeOnInit: true
+  });
+  const { data: studentOrgs, isLoading: orgsLoading } = useCollectionOptimized<StudentOrganization>(studentOrgsQuery, {
+    enableCache: true,
+    disableRealtimeOnInit: true
+  });
+  const { data: recentStudents, isLoading: recentStudentsLoading } = useCollectionOptimized<Student>(recentStudentsQuery, {
+    enableCache: true,
+    disableRealtimeOnInit: true
+  });
 
   const isLoading = studentsLoading || orgsLoading || recentStudentsLoading || adminLoading;
 
@@ -157,7 +166,7 @@ export default function AdminDashboard() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          {student.createdAt ? new Date(student.createdAt).toLocaleDateString() : '-'}
+                          {student.createdAt && typeof student.createdAt === 'string' ? new Date(student.createdAt).toLocaleDateString() : '-'}
                         </TableCell>
                       </TableRow>
                     ))
