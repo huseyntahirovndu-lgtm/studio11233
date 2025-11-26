@@ -33,12 +33,12 @@ export default function AdminDashboard() {
   
   const studentsQuery = useMemoFirebase(
     () => (firestore && adminUser?.role === 'admin') ? query(collection(firestore, "users"), where("role", "==", "student")) : null,
-    [firestore, adminUser]
+    [firestore, adminUser?.role]
   );
   
   const studentOrgsQuery = useMemoFirebase(
     () => (firestore && adminUser?.role === 'admin') ? query(collection(firestore, "student-organizations")) : null,
-    [firestore, adminUser]
+    [firestore, adminUser?.role]
   );
   
   const recentStudentsQuery = useMemoFirebase(
@@ -48,7 +48,7 @@ export default function AdminDashboard() {
       orderBy("createdAt", "desc"),
       limit(5)
     ) : null,
-    [firestore, adminUser]
+    [firestore, adminUser?.role]
   );
 
   const { data: students, isLoading: studentsLoading } = useCollection<Student>(studentsQuery);

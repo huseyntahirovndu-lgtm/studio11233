@@ -41,19 +41,19 @@ import {
 import type { StudentOrganization } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase";
-import { collection, query, doc } from "firebase/firestore";
+import { collection, query, doc, where } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 
 export default function AdminStudentOrgsPage() {
     const { toast } = useToast();
     const firestore = useFirestore();
 
-    const orgsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, "student-organizations")) : null, [firestore]);
+    const orgsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, "users"), where("role", "==", "student-organization")) : null, [firestore]);
     const { data: organizations, isLoading } = useCollection<StudentOrganization>(orgsQuery);
 
     const handleDelete = (orgId: string) => {
         if (!firestore) return;
-        const orgDocRef = doc(firestore, 'student-organizations', orgId);
+        const orgDocRef = doc(firestore, 'users', orgId);
         // Also need to handle deletion from auth, but this is a mock.
         // In a real scenario, you'd call a Cloud Function to delete the auth user.
         deleteDocumentNonBlocking(orgDocRef);

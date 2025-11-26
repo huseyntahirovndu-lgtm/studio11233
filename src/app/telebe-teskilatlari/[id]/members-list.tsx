@@ -26,7 +26,7 @@ export default function MembersList({ organization }: MembersListProps) {
             where(documentId(), 'in', organization.memberIds)
           )
         : null,
-    [firestore, organization, currentUser]
+    [firestore, JSON.stringify(organization?.memberIds), currentUser]
   );
 
   const { data: members, isLoading: membersLoading } = useCollection<Student>(membersQuery);

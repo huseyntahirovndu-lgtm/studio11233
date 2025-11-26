@@ -369,7 +369,7 @@
           "schema": {
             "$ref": "#/backend/entities/Student"
           },
-          "description": "Stores user profile information. The `role` field determines if it's a student or another user type. This collection holds all users.",
+          "description": "Stores user profile information. The `role` field determines if it's a student, admin, or student organization. This collection holds all users.",
           "params": [
             {
               "name": "userId",
@@ -493,7 +493,7 @@
           "schema": {
             "$ref": "#/backend/entities/StudentOrganization"
           },
-          "description": "Stores information about student-led organizations. These are also users.",
+          "description": "This collection is deprecated. Student organization data is now stored in the `/users` collection with `role: 'student-organization'`.",
           "params": [
             {
               "name": "orgId",
@@ -507,7 +507,7 @@
         "definition": {
           "entityName": "StudentOrgUpdate",
           "schema": { "$ref": "#/backend/entities/StudentOrgUpdate" },
-          "description": "Stores updates for a specific student organization.",
+          "description": "This subcollection is deprecated. Updates are now stored in a subcollection under the organization's document in the `/users` collection.",
           "params": [
             { "name": "orgId", "description": "The ID of the student organization." },
             { "name": "updateId", "description": "The unique ID for the update." }

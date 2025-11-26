@@ -51,8 +51,8 @@ export default function OrgUpdatesPage() {
     const { organization } = useStudentOrg();
 
     const updatesQuery = useMemoFirebase(() => 
-        organization ? query(collection(firestore, `users/${organization.id}/updates`), orderBy("createdAt", "desc")) : null, 
-        [firestore, organization]
+        organization?.id ? query(collection(firestore, `users/${organization.id}/updates`), orderBy("createdAt", "desc")) : null, 
+        [firestore, organization?.id]
     );
     const { data: updates, isLoading } = useCollection<StudentOrgUpdate>(updatesQuery);
 

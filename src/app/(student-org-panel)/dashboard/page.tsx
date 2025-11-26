@@ -1,13 +1,12 @@
 'use client';
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
-import { Student, StudentOrganization } from '@/types';
+import { Student } from '@/types';
 import { useMemo } from 'react';
 import { collection, query, where, documentId } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { useAuth } from '@/hooks/use-auth';
 import { useStudentOrg } from '../layout';
 
 const chartConfig = {
@@ -21,10 +20,9 @@ export default function OrganizationDashboardPage() {
   const firestore = useFirestore();
   const { organization, isLoading: orgLoading } = useStudentOrg();
 
-
   const membersQuery = useMemoFirebase(
     () => (organization?.memberIds && organization.memberIds.length > 0 ? query(collection(firestore, 'users'), where(documentId(), 'in', organization.memberIds)) : null),
-    [firestore, organization]
+    [firestore, JSON.stringify(organization?.memberIds)]
   );
   const { data: members, isLoading: membersLoading } = useCollection<Student>(membersQuery);
 
@@ -45,16 +43,13 @@ export default function OrganizationDashboardPage() {
 
         let memberDate: Date | null = null;
         try {
-            // Firestore timestamp object
             if (member.createdAt && typeof member.createdAt.toDate === 'function') {
                 memberDate = member.createdAt.toDate();
-            // ISO string or timestamp number
             } else if (typeof member.createdAt === 'string' || typeof member.createdAt === 'number') {
                 memberDate = new Date(member.createdAt);
                  if (isNaN(memberDate.getTime())) {
                     memberDate = null;
                 }
-            // Javascript Date object
             } else if (member.createdAt instanceof Date) {
                 memberDate = member.createdAt;
             }

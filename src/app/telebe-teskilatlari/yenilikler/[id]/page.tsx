@@ -16,30 +16,20 @@ export default function StudentOrgUpdateDetailsPage() {
     const { id } = useParams();
     const firestore = useFirestore();
     const updateId = typeof id === 'string' ? id : '';
-
-    const [organization, setOrganization] = useState<StudentOrganization | null>(null);
     
-    // Step 1: Fetch the update document from the top-level collection.
     const updateDocRef = useMemoFirebase(() => 
       firestore && updateId ? doc(firestore, 'student-org-updates', updateId) : null,
       [firestore, updateId]
     );
     const { data: update, isLoading: isUpdateLoading } = useDoc<StudentOrgUpdate>(updateDocRef);
 
-    // Step 2: Once the update is fetched, use its organizationId to fetch the organization.
     const orgDocRef = useMemoFirebase(() =>
       firestore && update?.organizationId ? doc(firestore, 'student-organizations', update.organizationId) : null,
-      [firestore, update]
+      [firestore, update?.organizationId]
     );
-    const { data: orgData, isLoading: isOrgLoading } = useDoc<StudentOrganization>(orgDocRef);
+    const { data: organization, isLoading: isOrgLoading } = useDoc<StudentOrganization>(orgDocRef);
     
-    useEffect(() => {
-        if (orgData) {
-            setOrganization(orgData);
-        }
-    }, [orgData]);
-
-    const isLoading = isUpdateLoading || (update && !orgData);
+    const isLoading = isUpdateLoading || (update && !organization);
 
     const sanitizedContent = update?.content && typeof window !== 'undefined'
         ? DOMPurify.sanitize(update.content)

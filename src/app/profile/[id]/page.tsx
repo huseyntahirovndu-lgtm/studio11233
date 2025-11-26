@@ -120,7 +120,7 @@ export default function ProfilePage() {
   };
   
   const handleInvite = async () => {
-    if (!organization || !student || !selectedProject || !organizationProjects) {
+    if (!organization || !student || !selectedProject || !organizationProjects || !firestore) {
         toast({ variant: 'destructive', title: 'Xəta', description: 'Dəvət üçün layihə seçilməlidir.' });
         return;
     }
