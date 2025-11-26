@@ -206,7 +206,7 @@ export default function AdminStudentsPage() {
                       <TableRow key={student.id}>
                           <TableCell className="font-medium">
                               {student.firstName} {student.lastName}
-                              <div className="text-xs text-muted-foreground md:hidden">{student.email}</div>
+                              <div className="text-xs text-muted-foreground">{student.email}</div>
                           </TableCell>
                           <TableCell>
                               <Badge variant={student.status === 'təsdiqlənmiş' ? 'default' : student.status === 'gözləyir' ? 'secondary' : 'outline'}>

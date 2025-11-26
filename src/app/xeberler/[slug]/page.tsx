@@ -1,82 +1,126 @@
-import { collection, query, where, limit, getDocs, doc, getDoc } from 'firebase/firestore';
-import { initializeServerFirebase } from '@/firebase/server-init';
-import type { Metadata } from 'next';
+'use client';
+import { useParams } from 'next/navigation';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, limit } from 'firebase/firestore';
 import { News, Admin } from '@/types';
-import NewsDetailsClient from './page-client';
+import { Skeleton } from '@/components/ui/skeleton';
+import Image from 'next/image';
+import { format } from 'date-fns';
+import { Calendar, User } from 'lucide-react';
+import DOMPurify from 'dompurify';
+import { useEffect, useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
-type Props = {
-  params: { slug: string };
-};
+function NewsDetailsLoading() {
+    return (
+        <div className="container mx-auto max-w-4xl py-12 px-4">
+            <Skeleton className="h-12 w-3/4 mb-4" />
+            <div className="flex items-center gap-4 mb-8">
+                <Skeleton className="h-6 w-1/4" />
+                <Skeleton className="h-6 w-1/4" />
+            </div>
+            <Skeleton className="w-full h-96 mb-8" />
+            <div className="space-y-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-full mt-4" />
+                <Skeleton className="h-4 w-2/3" />
+            </div>
+        </div>
+    );
+}
 
-// Function to fetch data on the server
-async function getNewsData(slug: string) {
-    const { firestore } = initializeServerFirebase();
-    const newsQuery = query(collection(firestore, 'news'), where('slug', '==', slug), limit(1));
-    const newsSnapshot = await getDocs(newsQuery);
+export default function NewsDetailsPage() {
+    const { slug } = useParams();
+    const firestore = useFirestore();
+    const newsSlug = typeof slug === 'string' ? slug : '';
 
-    if (newsSnapshot.empty) {
-        return { newsItem: null, author: null };
-    }
+    const newsQuery = useMemoFirebase(() =>
+        firestore && newsSlug
+            ? query(collection(firestore, 'news'), where('slug', '==', newsSlug), limit(1))
+            : null,
+        [firestore, newsSlug]
+    );
 
-    const newsItem = { id: newsSnapshot.docs[0].id, ...newsSnapshot.docs[0].data() } as News;
-    
-    let author: Admin | null = null;
-    if (newsItem.authorId) {
-        const authorDoc = await getDoc(doc(firestore, 'users', newsItem.authorId));
-        if (authorDoc.exists()) {
-            author = authorDoc.data() as Admin;
+    const { data: newsData, isLoading: isNewsLoading } = useCollection<News>(newsQuery);
+    const newsItem = newsData?.[0];
+
+    const authorQuery = useMemoFirebase(() =>
+        firestore && newsItem?.authorId
+            ? query(collection(firestore, 'users'), where('id', '==', newsItem.authorId), limit(1))
+            : null,
+        [firestore, newsItem]
+    );
+    const { data: authorData, isLoading: isAuthorLoading } = useCollection<Admin>(authorQuery);
+    const author = authorData?.[0];
+
+    const [sanitizedContent, setSanitizedContent] = useState('');
+
+    useEffect(() => {
+        if (newsItem?.content && typeof window !== 'undefined') {
+            setSanitizedContent(DOMPurify.sanitize(newsItem.content));
         }
-    }
+    }, [newsItem?.content]);
+
+    const isLoading = isNewsLoading || (newsData && newsData.length > 0 && isAuthorLoading);
     
-    return { newsItem, author };
-}
-
-// generateMetadata function for dynamic SEO
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { newsItem } = await getNewsData(params.slug);
-
-  if (!newsItem) {
-    return {
-      title: 'Xəbər Tapılmadı',
-      description: 'Axtardığınız xəbər mövcud deyil.',
-    };
-  }
-  
-  const description = newsItem.content.replace(/<[^>]*>?/gm, '').substring(0, 160);
-
-  return {
-    title: `${newsItem.title} | İstedad Mərkəzi`,
-    description: description,
-    openGraph: {
-      title: newsItem.title,
-      description: description,
-      type: 'article',
-      images: [
-        {
-          url: newsItem.coverImageUrl || 'https://istedadmerkezi.net/logo.png',
-          width: 1200,
-          height: 630,
-          alt: newsItem.title,
-        },
-      ],
-    },
-    twitter: {
-       card: 'summary_large_image',
-       title: newsItem.title,
-       description: description,
-       images: [newsItem.coverImageUrl || 'https://istedadmerkezi.net/logo.png'],
+    if (isLoading) {
+        return <NewsDetailsLoading />;
     }
-  };
-}
 
-// The main page component is now a Server Component
-export default async function NewsDetailsPage({ params }: Props) {
-  const { newsItem, author } = await getNewsData(params.slug);
+    if (!newsItem) {
+        return <div className="text-center py-20">Xəbər tapılmadı.</div>;
+    }
 
-  if (!newsItem) {
-    return <div className="text-center py-20">Xəbər tapılmadı.</div>;
-  }
-  
-  // Pass server-fetched data to the client component
-  return <NewsDetailsClient newsItem={newsItem} author={author} />;
+    return (
+        <article className="container mx-auto max-w-4xl py-8 md:py-12 px-4">
+            <header className="mb-8">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight mb-4">
+                    {newsItem.title}
+                </h1>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                           <AvatarFallback>{author ? `${author.firstName.charAt(0)}${author.lastName.charAt(0)}` : 'A'}</AvatarFallback>
+                        </Avatar>
+                        <span>{author ? `${author.firstName} ${author.lastName}` : 'Admin'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        <time dateTime={newsItem.createdAt?.toDate().toISOString()}>
+                            {newsItem.createdAt ? format(newsItem.createdAt.toDate(), 'dd MMMM, yyyy') : ''}
+                        </time>
+                    </div>
+                </div>
+            </header>
+
+            {newsItem.coverImageUrl && (
+                <div className="relative w-full h-64 md:h-96 rounded-lg overflow-hidden mb-8">
+                    <Image
+                        src={newsItem.coverImageUrl}
+                        alt={newsItem.title}
+                        fill
+                        className="object-cover"
+                        priority
+                    />
+                </div>
+            )}
+
+            {sanitizedContent && (
+                <div
+                    className="prose dark:prose-invert max-w-none prose-lg prose-headings:font-headline prose-p:font-body"
+                    dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+                />
+            )}
+            
+            <div className="mt-12 text-center">
+                <Link href="/xeberler">
+                    <Button variant="outline">Bütün xəbərlərə qayıt</Button>
+                </Link>
+            </div>
+        </article>
+    );
 }

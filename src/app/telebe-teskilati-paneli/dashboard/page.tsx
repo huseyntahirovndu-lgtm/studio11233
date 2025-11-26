@@ -37,28 +37,27 @@ export default function OrganizationDashboardPage() {
     });
 
     members.forEach(member => {
-        const createdAt = member.createdAt;
-        if (!createdAt) {
+        if (!member || !member.createdAt) {
             return; 
         }
 
         let memberDate: Date | null = null;
         try {
-            // Case 1: Firestore Timestamp object
-            if (createdAt && typeof (createdAt as any).toDate === 'function') {
-                memberDate = (createdAt as any).toDate();
-            // Case 2: ISO string or Unix timestamp number
-            } else if (typeof createdAt === 'string' || typeof createdAt === 'number') {
-                memberDate = new Date(createdAt);
-                 if (isNaN(memberDate.getTime())) { // Check if the date is valid
+            // Firestore timestamp object
+            if (member.createdAt && typeof member.createdAt.toDate === 'function') {
+                memberDate = member.createdAt.toDate();
+            // ISO string or timestamp number
+            } else if (typeof member.createdAt === 'string' || typeof member.createdAt === 'number') {
+                memberDate = new Date(member.createdAt);
+                 if (isNaN(memberDate.getTime())) {
                     memberDate = null;
                 }
-            // Case 3: JavaScript Date object
-            } else if (createdAt instanceof Date) {
-                memberDate = createdAt;
+            // Javascript Date object
+            } else if (member.createdAt instanceof Date) {
+                memberDate = member.createdAt;
             }
         } catch(e) {
-            console.error("Could not parse date:", member.id, createdAt, e);
+            console.error("Tarix formatı ilə bağlı problem:", member.id, member.createdAt, e);
             return;
         }
 

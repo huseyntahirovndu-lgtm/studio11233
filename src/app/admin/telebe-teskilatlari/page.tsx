@@ -41,19 +41,19 @@ import {
 import type { StudentOrganization } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase";
-import { collection, query, doc, where } from "firebase/firestore";
+import { collection, query, doc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 
 export default function AdminStudentOrgsPage() {
     const { toast } = useToast();
     const firestore = useFirestore();
 
-    const orgsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, "users"), where("role", "==", "student-organization")) : null, [firestore]);
+    const orgsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, "student-organizations")) : null, [firestore]);
     const { data: organizations, isLoading } = useCollection<StudentOrganization>(orgsQuery);
 
     const handleDelete = (orgId: string) => {
         if (!firestore) return;
-        const orgDocRef = doc(firestore, 'users', orgId);
+        const orgDocRef = doc(firestore, 'student-organizations', orgId);
         // Also need to handle deletion from auth, but this is a mock.
         // In a real scenario, you'd call a Cloud Function to delete the auth user.
         deleteDocumentNonBlocking(orgDocRef);
@@ -90,6 +90,9 @@ export default function AdminStudentOrgsPage() {
                     <TableRow>
                     <TableHead>Təşkilat Adı</TableHead>
                     <TableHead>E-poçt</TableHead>
+                    <TableHead className="hidden md:table-cell">
+                        Fakültə
+                    </TableHead>
                      <TableHead className="hidden md:table-cell">
                         Status
                     </TableHead>
@@ -99,13 +102,16 @@ export default function AdminStudentOrgsPage() {
                 <TableBody>
                      {isLoading ? (
                          <TableRow>
-                            <TableCell colSpan={4} className="h-24 text-center">Yüklənir...</TableCell>
+                            <TableCell colSpan={5} className="h-24 text-center">Yüklənir...</TableCell>
                         </TableRow>
                     ) : organizations && organizations.length > 0 ? (
                         organizations.map((org) => (
                         <TableRow key={org.id}>
                             <TableCell className="font-medium">{org.name}</TableCell>
                             <TableCell>{org.email}</TableCell>
+                            <TableCell className="hidden md:table-cell">
+                                {org.faculty}
+                            </TableCell>
                             <TableCell className="hidden md:table-cell">
                                 <Badge variant={org.status === 'təsdiqlənmiş' ? 'default' : org.status === 'gözləyir' ? 'secondary' : 'outline'}>
                                   {statusMap[org.status]}
@@ -148,7 +154,7 @@ export default function AdminStudentOrgsPage() {
                         ))
                     ) : (
                          <TableRow>
-                            <TableCell colSpan={4} className="h-24 text-center">Heç bir təşkilat tapılmadı.</TableCell>
+                            <TableCell colSpan={5} className="h-24 text-center">Heç bir təşkilat tapılmadı.</TableCell>
                         </TableRow>
                     )}
                 </TableBody>

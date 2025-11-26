@@ -95,7 +95,7 @@ export default function StudentDashboard() {
         }
     }, [user, loading, router]);
     
-    const invitationsQuery = useMemoFirebase(() => studentProfile ? query(collection(firestore, `users/${studentProfile.id}/invitations`), where('status', '==', 'gözləyir')) : null, [firestore, studentProfile?.id]);
+    const invitationsQuery = useMemoFirebase(() => studentProfile ? query(collection(firestore, `users/${studentProfile.id}/invitations`), where('status', '==', 'gözləyir')) : null, [firestore, studentProfile]);
     const { data: invitations, isLoading: invitationsLoading } = useCollection<Invitation>(invitationsQuery as any);
     const [enrichedInvitations, setEnrichedInvitations] = useState<EnrichedInvitation[]>([]);
 
@@ -104,7 +104,7 @@ export default function StudentDashboard() {
             const enrich = async () => {
                 const enriched = await Promise.all(invitations.map(async (inv) => {
                     const projectDoc = await getDoc(doc(firestore, 'projects', inv.projectId));
-                    const orgDoc = await getDoc(doc(firestore, 'users', inv.organizationId));
+                    const orgDoc = await getDoc(doc(firestore, 'student-organizations', inv.organizationId));
                     return {
                         ...inv,
                         project: projectDoc.exists() ? { id: projectDoc.id, ...projectDoc.data() } as Project : undefined,

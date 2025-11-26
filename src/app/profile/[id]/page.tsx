@@ -50,7 +50,7 @@ export default function ProfilePage() {
   const achievementsQuery = useMemoFirebase(() => studentId ? collection(firestore, `users/${studentId}/achievements`) : null, [firestore, studentId]);
   const certificatesQuery = useMemoFirebase(() => studentId ? collection(firestore, `users/${studentId}/certificates`) : null, [firestore, studentId]);
   
-  const orgProjectsQuery = useMemoFirebase(() => organization?.id ? query(collection(firestore, 'projects'), where('ownerId', '==', organization.id)) : null, [firestore, organization?.id]);
+  const orgProjectsQuery = useMemoFirebase(() => organization?.id ? query(collection(firestore, 'projects'), where('studentId', '==', organization.id)) : null, [firestore, organization?.id]);
 
   const { data: student, isLoading: studentLoading } = useDoc<Student>(studentDocRef);
   const { data: projectsData, isLoading: projectsLoading } = useCollection<Project>(projectsQuery);

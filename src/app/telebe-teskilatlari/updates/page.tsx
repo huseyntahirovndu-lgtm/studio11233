@@ -38,30 +38,43 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import type { News } from "@/types";
+import type { StudentOrganization, StudentOrgUpdate } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase";
-import { collection, query, orderBy, doc } from "firebase/firestore";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, query, orderBy, doc, writeBatch } from "firebase/firestore";
 import { format } from 'date-fns';
+import { useAuth } from "@/hooks/use-auth";
 
-export default function AdminNewsPage() {
+export default function OrgUpdatesPage() {
     const { toast } = useToast();
     const firestore = useFirestore();
+    const { user } = useAuth();
+    const organization = user as StudentOrganization | null;
 
-    const newsQuery = useMemoFirebase(() => 
-        firestore ? query(collection(firestore, `news`), orderBy("createdAt", "desc")) : null, 
-        [firestore]
+    const updatesQuery = useMemoFirebase(() => 
+        organization ? query(collection(firestore, `student-organizations/${organization.id}/updates`), orderBy("createdAt", "desc")) : null, 
+        [firestore, organization]
     );
-    const { data: news, isLoading } = useCollection<News>(newsQuery);
+    const { data: updates, isLoading } = useCollection<StudentOrgUpdate>(updatesQuery);
 
-    const handleDelete = async (newsId: string) => {
-        if (!firestore) return;
-        
-        const docRef = doc(firestore, 'news', newsId);
-        
-        await deleteDocumentNonBlocking(docRef);
+    const handleDelete = async (updateId: string) => {
+        if (!organization || !firestore) return;
 
-        toast({ title: "Xəbər uğurla silindi." });
+        const batch = writeBatch(firestore);
+
+        const subCollectionDocRef = doc(firestore, `student-organizations/${organization.id}/updates`, updateId);
+        const topLevelDocRef = doc(firestore, 'student-org-updates', updateId);
+
+        batch.delete(subCollectionDocRef);
+        batch.delete(topLevelDocRef);
+
+        try {
+            await batch.commit();
+            toast({ title: "Yenilik uğurla silindi." });
+        } catch (error) {
+            console.error("Yenilik silinərkən xəta:", error);
+            toast({ variant: 'destructive', title: "Xəta", description: "Yenilik silinərkən xəta baş verdi." });
+        }
     };
 
     return (
@@ -69,15 +82,15 @@ export default function AdminNewsPage() {
             <CardHeader>
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <div>
-                        <CardTitle>Xəbərlər</CardTitle>
+                        <CardTitle>Təşkilat Yenilikləri</CardTitle>
                         <CardDescription>
-                            Platformadakı xəbərləri və məqalələri idarə edin.
+                            Təşkilatınızın fəaliyyəti haqqında yenilikləri və elanları idarə edin.
                         </CardDescription>
                     </div>
                     <Button asChild className="w-full sm:w-auto">
-                        <Link href="/admin/xeberler/add">
+                        <Link href="/telebe-teskilati-paneli/updates/add">
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Yeni Xəbər Yarat
+                            Yeni Yenilik Yarat
                         </Link>
                     </Button>
                 </div>
@@ -87,7 +100,6 @@ export default function AdminNewsPage() {
                 <TableHeader>
                     <TableRow>
                     <TableHead>Başlıq</TableHead>
-                    <TableHead className="hidden md:table-cell">Müəllif</TableHead>
                     <TableHead className="hidden md:table-cell">Yaradılma Tarixi</TableHead>
                     <TableHead className="text-right">Əməliyyatlar</TableHead>
                     </TableRow>
@@ -95,13 +107,12 @@ export default function AdminNewsPage() {
                 <TableBody>
                     {isLoading ? (
                          <TableRow>
-                            <TableCell colSpan={4} className="h-24 text-center">Yüklənir...</TableCell>
+                            <TableCell colSpan={3} className="h-24 text-center">Yüklənir...</TableCell>
                         </TableRow>
-                    ) : news && news.length > 0 ? (
-                        news.map((item) => (
+                    ) : updates && updates.length > 0 ? (
+                        updates.map((item) => (
                         <TableRow key={item.id}>
                             <TableCell className="font-medium">{item.title}</TableCell>
-                            <TableCell className="hidden md:table-cell">{item.authorName}</TableCell>
                             <TableCell className="hidden md:table-cell">
                                {item.createdAt?.toDate ? format(item.createdAt.toDate(), 'dd.MM.yyyy') : '-'}
                             </TableCell>
@@ -115,11 +126,8 @@ export default function AdminNewsPage() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Əməliyyatlar</DropdownMenuLabel>
-                                         <DropdownMenuItem asChild>
-                                            <Link href={`/xeberler/${item.slug}`} target="_blank">Xəbərə Bax</Link>
-                                        </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
-                                            <Link href={`/admin/xeberler/edit/${item.id}`}>Redaktə Et</Link>
+                                            <Link href={`/telebe-teskilati-paneli/updates/edit/${item.id}`}>Redaktə Et</Link>
                                         </DropdownMenuItem>
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
@@ -129,7 +137,7 @@ export default function AdminNewsPage() {
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>Silməni təsdiq edirsiniz?</AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                        Bu əməliyyat geri qaytarılmazdır. "{item.title}" başlıqlı xəbər sistemdən həmişəlik silinəcək.
+                                                        Bu əməliyyat geri qaytarılmazdır. "{item.title}" başlıqlı yenilik sistemdən həmişəlik silinəcək.
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
@@ -145,7 +153,7 @@ export default function AdminNewsPage() {
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={4} className="h-24 text-center">Heç bir xəbər tapılmadı.</TableCell>
+                            <TableCell colSpan={3} className="h-24 text-center">Heç bir yenilik tapılmadı.</TableCell>
                         </TableRow>
                     )}
                 </TableBody>

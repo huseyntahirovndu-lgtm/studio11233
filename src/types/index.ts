@@ -30,25 +30,21 @@ export interface Skill {
   level: SkillLevel;
 }
 
-export type ProjectStatus = 'aktiv' | 'bitmiş';
 export interface Project {
   id: string;
   ownerId: string; // Owner ID (can be student or organization)
   ownerType: 'student' | 'organization';
-  ownerName: string;
-  ownerLogo?: string;
   title: string;
   description: string;
-  role?: string;
+  role: string;
   link?: string;
   mediaLink?: string;
+  teamMembers?: string[];
   teamMemberIds?: string[];
   invitedStudentIds?: string[];
-  applicantIds?: string[]; // IDs of students who applied
-  status: ProjectStatus;
-  createdAt: any;
+  applicantIds?: string[];
+  status: 'davam edir' | 'tamamlanıb';
 }
-
 
 export interface Achievement {
   id: string;
@@ -158,26 +154,14 @@ export interface CategoryData {
     name: string;
 }
 
-export type InvitationStatus = 'gözləyir' | 'qəbul edildi' | 'rədd edildi';
-export type ApplicationStatus = 'gözləyir' | 'qəbul edildi' | 'rədd edildi';
-
+export type InvitationStatus = 'gözləyir' | 'qəbul edildi' | 'rədd edildi' | 'müraciət';
 export interface Invitation {
     id: string;
     organizationId: string;
     studentId: string;
     projectId: string;
     status: InvitationStatus;
-    createdAt: any;
+    createdAt: Date;
 }
-
-export interface Application {
-    id: string;
-    organizationId: string;
-    studentId: string;
-    projectId: string;
-    status: ApplicationStatus;
-    createdAt: any;
-}
-
 
 export type AppUser = Student | StudentOrganization | Admin;

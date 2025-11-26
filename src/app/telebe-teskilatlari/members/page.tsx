@@ -1,6 +1,6 @@
 'use client';
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
-import { Student } from '@/types';
+import { StudentOrganization, Student } from '@/types';
 import { useState } from 'react';
 import { collection, doc, query, where, documentId } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,12 +22,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import { useStudentOrg } from '@/app/(student-org-panel)/layout';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function OrganizationMembersPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { organization, isLoading: orgLoading } = useStudentOrg();
+  const { user, loading: orgLoading } = useAuth();
+  const organization = user as StudentOrganization | null;
 
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [isAddingMember, setIsAddingMember] = useState(false);
@@ -42,7 +43,7 @@ export default function OrganizationMembersPage() {
   const { data: allStudents } = useCollection<Student>(allStudentsQuery);
 
   const studentOptions =
-    allStudents?.filter(s => !organization?.memberIds?.includes(s.id)).map(s => ({
+    allStudents?.filter(s => !organization?.memberIds?.includes(s.id) && s.id !== organization?.leaderId).map(s => ({
         value: s.id,
         label: `${s.firstName} ${s.lastName} (${s.faculty})`,
       })) || [];
@@ -50,7 +51,7 @@ export default function OrganizationMembersPage() {
   const handleAddMember = async () => {
     if (!organization || !selectedStudentId) return;
     setIsAddingMember(true);
-    const orgDocRef = doc(firestore, 'users', organization.id);
+    const orgDocRef = doc(firestore, 'student-organizations', organization.id);
     const newMemberIds = [...(organization.memberIds || []), selectedStudentId];
 
     await updateDocumentNonBlocking(orgDocRef, { memberIds: newMemberIds });
@@ -61,7 +62,7 @@ export default function OrganizationMembersPage() {
   
   const handleRemoveMember = async (memberId: string) => {
     if(!organization) return;
-    const orgDocRef = doc(firestore, 'users', organization.id);
+    const orgDocRef = doc(firestore, 'student-organizations', organization.id);
     const newMemberIds = organization.memberIds.filter(id => id !== memberId);
     
     await updateDocumentNonBlocking(orgDocRef, { memberIds: newMemberIds });

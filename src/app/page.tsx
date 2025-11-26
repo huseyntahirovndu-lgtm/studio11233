@@ -125,15 +125,30 @@ export default function HomePage() {
         
         if (storiesToConsider.length === 0) return;
 
-        // Fallback logic: directly take the first two stories if AI fails or is disabled
-        setSuccessStories(storiesToConsider.slice(0, 2).map(s => ({
-            studentId: s.id,
-            name: `${s.firstName} ${s.lastName}`,
-            faculty: s.faculty,
-            story: s.successStory,
-            profilePictureUrl: s.profilePictureUrl
-        })));
-        
+        if (storiesToConsider.length <= 2) {
+            setSuccessStories(storiesToConsider.map(s => ({
+                studentId: s.id,
+                name: `${s.firstName} ${s.lastName}`,
+                faculty: s.faculty,
+                story: s.successStory,
+                profilePictureUrl: s.profilePictureUrl
+            })));
+            return;
+        }
+
+        try {
+            const result = await selectTopStories({ stories: storiesToConsider });
+            setSuccessStories(result.selectedStories.map(s => ({...s, profilePictureUrl: storiesToConsider.find(stc => stc.id === s.studentId)?.profilePictureUrl})));
+        } catch (error) {
+            console.error("AI story selection failed, using fallback:", error);
+            setSuccessStories(storiesToConsider.slice(0, 2).map(s => ({
+                 studentId: s.id,
+                 name: `${s.firstName} ${s.lastName}`,
+                 faculty: s.faculty,
+                 story: s.successStory,
+                 profilePictureUrl: s.profilePictureUrl
+            })));
+        }
     };
     fetchStories();
 
