@@ -18,7 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollectionOptimized, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, writeBatch, updateDoc } from 'firebase/firestore';
 import type { FacultyData } from '@/types';
 import { PlusCircle, Trash2 } from 'lucide-react';
@@ -55,7 +55,7 @@ export default function AdminFacultiesPage() {
   const firestore = useFirestore();
 
   const facultiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'faculties') : null, [firestore]);
-  const { data: faculties, isLoading: facultiesLoading } = useCollection<FacultyData>(facultiesQuery);
+  const { data: faculties, isLoading: facultiesLoading } = useCollectionOptimized<FacultyData>(facultiesQuery, { enableCache: true, disableRealtimeOnInit: true });
 
   useEffect(() => {
     if (firestore && !facultiesLoading && faculties && faculties.length === 0) {

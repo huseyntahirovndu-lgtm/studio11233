@@ -26,18 +26,13 @@ if (!getApps().length) {
   app = initializeApp(firebaseConfig);
   
   // ⚡ ƏSAS OPTIMALLAŞDIRMA - Offline cache və settings
-  try {
-    firestore = initializeFirestore(app, {
-      localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager()
-      }),
-      experimentalAutoDetectLongPolling: true, 
-      ignoreUndefinedProperties: true,
-    });
-  } catch (e) {
-    console.error("Could not initialize offline cache: ", e)
-    firestore = getFirestore(app);
-  }
+  firestore = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+    }),
+    experimentalAutoDetectLongPolling: true, 
+    ignoreUndefinedProperties: true,
+  });
   
   auth = getAuth(app);
 } else {

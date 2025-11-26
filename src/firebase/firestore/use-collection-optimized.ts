@@ -77,14 +77,14 @@ export function useCollectionOptimized<T = any>(
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
         setData(cached.data);
         setIsLoading(false);
-        // We still continue to setup a listener in the background
+        return;
       }
     }
 
     setIsLoading(true);
     setError(null);
 
-    const setupRealtimeListener = () => {
+    function setupRealtimeListener() {
       const unsubscribe = onSnapshot(
         memoizedTargetRefOrQuery!,
         (snapshot: QuerySnapshot<DocumentData>) => {
@@ -147,13 +147,11 @@ export function useCollectionOptimized<T = any>(
                      if (enableCache) {
                        queryCache.set(queryKey, { data: results, timestamp: Date.now() });
                      }
-                     // After initial server fetch, attach a realtime listener
                      setupRealtimeListener();
                  }).catch(() => setupRealtimeListener());
             }
         })
         .catch(() => {
-          // If cache fails, directly go to server and then listen
           setupRealtimeListener();
         });
       

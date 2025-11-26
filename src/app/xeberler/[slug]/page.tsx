@@ -48,14 +48,14 @@ export default function NewsDetailsPage() {
     const { data: newsData, isLoading: isNewsLoading } = useCollectionOptimized<News>(newsQuery, { enableCache: true, disableRealtimeOnInit: true });
     const newsItem = newsData?.[0];
 
-    const authorQuery = useMemoFirebase(() =>
-        firestore && newsItem?.authorId
-            ? query(collection(firestore, 'users'), where('id', '==', newsItem.authorId), limit(1))
-            : null,
-        [firestore, newsItem?.authorId]
-    );
-    const { data: authorData, isLoading: isAuthorLoading } = useCollectionOptimized<Admin>(authorQuery, { enableCache: true, disableRealtimeOnInit: true });
-    const author = authorData?.[0];
+    // Admin user is hardcoded and doesn't need a separate query
+    const author: Admin | null = newsItem ? {
+        id: 'admin_user',
+        role: 'admin',
+        email: 'huseynimanov@ndu.edu.az',
+        firstName: 'Hüseyn',
+        lastName: 'Tahirov',
+    } : null;
 
     const [sanitizedContent, setSanitizedContent] = useState('');
 
@@ -65,7 +65,7 @@ export default function NewsDetailsPage() {
         }
     }, [newsItem?.content]);
 
-    const isLoading = isNewsLoading || (newsData && newsData.length > 0 && isAuthorLoading);
+    const isLoading = isNewsLoading;
     
     if (isLoading) {
         return <NewsDetailsLoading />;
@@ -86,7 +86,7 @@ export default function NewsDetailsPage() {
                         <Avatar className="h-6 w-6">
                            <AvatarFallback>{author ? `${author.firstName.charAt(0)}${author.lastName.charAt(0)}` : 'A'}</AvatarFallback>
                         </Avatar>
-                        <span>{author ? `${author.firstName} ${author.lastName}` : 'Admin'}</span>
+                        <span>{author ? `${author.firstName} ${author.lastName}` : newsItem.authorName}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
