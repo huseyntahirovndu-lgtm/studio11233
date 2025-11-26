@@ -21,19 +21,17 @@ let app: FirebaseApp;
 let firestore: Firestore;
 let auth: Auth;
 
-// Firebase initialize - yalnız bir dəfə
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
-  
-  // ⚡ ƏSAS OPTIMALLAŞDIRMA - Offline cache və settings
+
   firestore = initializeFirestore(app, {
     localCache: persistentLocalCache({
       tabManager: persistentMultipleTabManager()
     }),
-    experimentalAutoDetectLongPolling: true, // Avtomatik optimal bağlantı
-    ignoreUndefinedProperties: true, // Undefined field-ləri ignore et
+    experimentalAutoDetectLongPolling: true,
+    ignoreUndefinedProperties: true,
   });
-  
+
   auth = getAuth(app);
 } else {
   app = getApps()[0];
