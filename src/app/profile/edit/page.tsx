@@ -520,7 +520,7 @@ function EditProfilePageComponent() {
                      <FormField name="courseYear" control={profileForm.control} render={({ field }) => (
                         <FormItem>
                             <FormLabel>Təhsil ili</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value ? String(field.value) : ""}>
+                            <Select onValueChange={field.onChange} value={field.value ? String(field.value) : ""}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Təhsil ilini seçin" /></SelectTrigger></FormControl>
                                 <SelectContent>
                                     {[1, 2, 3, 4, 5, 6].map(y => <SelectItem key={y} value={String(y)}>{y}-ci kurs</SelectItem>)}
