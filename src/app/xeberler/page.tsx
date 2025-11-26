@@ -1,5 +1,5 @@
 'use client';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollectionOptimized, useFirestore, useMemoFirebase } from '@/firebase';
 import { News } from '@/types';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,7 +31,7 @@ export default function NewsPage() {
         firestore ? query(collection(firestore, 'news'), orderBy('createdAt', 'desc')) : null,
         [firestore]
     );
-    const { data: news, isLoading } = useCollection<News>(newsQuery);
+    const { data: news, isLoading } = useCollectionOptimized<News>(newsQuery, { enableCache: true, disableRealtimeOnInit: true });
 
     return (
         <main className="container mx-auto py-12 px-4">

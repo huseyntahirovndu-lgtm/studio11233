@@ -1,6 +1,6 @@
 'use client';
 import { useParams } from 'next/navigation';
-import { useDoc, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useCollectionOptimized, useFirestore, useMemoFirebase } from '@/firebase';
 import { StudentOrganization, StudentOrgUpdate } from '@/types';
 import { doc, collection, query, orderBy, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,14 +38,14 @@ export default function StudentOrgDetailsPage() {
 
   const orgId = typeof id === 'string' ? id : '';
 
-  const orgDocRef = useMemoFirebase(() => (firestore && orgId ? doc(firestore, 'student-organizations', orgId) : null), [firestore, orgId]);
+  const orgDocRef = useMemoFirebase(() => (firestore && orgId ? doc(firestore, 'users', orgId) : null), [firestore, orgId]);
   const { data: organization, isLoading: orgLoading } = useDoc<StudentOrganization>(orgDocRef);
   
   const updatesQuery = useMemoFirebase(
     () => (firestore && orgId ? query(collection(firestore, 'student-org-updates'), where('organizationId', '==', orgId), orderBy('createdAt', 'desc')) : null),
     [firestore, orgId]
   );
-  const { data: updates, isLoading: updatesLoading } = useCollection<StudentOrgUpdate>(updatesQuery);
+  const { data: updates, isLoading: updatesLoading } = useCollectionOptimized<StudentOrgUpdate>(updatesQuery, { enableCache: true, disableRealtimeOnInit: true });
 
   const isLoading = orgLoading || updatesLoading;
 

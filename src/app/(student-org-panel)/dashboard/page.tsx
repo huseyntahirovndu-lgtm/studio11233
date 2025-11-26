@@ -1,5 +1,5 @@
 'use client';
-import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { useFirestore, useMemoFirebase, useCollectionOptimized } from '@/firebase';
 import { Student } from '@/types';
 import { useMemo } from 'react';
 import { collection, query, where, documentId } from 'firebase/firestore';
@@ -24,7 +24,7 @@ export default function OrganizationDashboardPage() {
     () => (organization?.memberIds && organization.memberIds.length > 0 ? query(collection(firestore, 'users'), where(documentId(), 'in', organization.memberIds)) : null),
     [firestore, JSON.stringify(organization?.memberIds)]
   );
-  const { data: members, isLoading: membersLoading } = useCollection<Student>(membersQuery);
+  const { data: members, isLoading: membersLoading } = useCollectionOptimized<Student>(membersQuery, { enableCache: true, disableRealtimeOnInit: true });
 
   const memberJoinData = useMemo(() => {
     if (!members) return [];

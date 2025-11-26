@@ -19,7 +19,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
+import { useCollectionOptimized, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { selectTopStories } from '@/app/actions';
 import { format } from 'date-fns';
@@ -61,14 +61,14 @@ export default function HomePage() {
   const { user } = useAuth();
 
   const studentsQuery = useMemoFirebase(() => query(collection(firestore, "users"), where("status", "==", "təsdiqlənmiş"), where("role", "==", "student")), [firestore]);
-  const studentOrgsQuery = useMemoFirebase(() => query(collection(firestore, "student-organizations"), where("status", "==", "təsdiqlənmiş")), [firestore]);
+  const studentOrgsQuery = useMemoFirebase(() => query(collection(firestore, "users"), where("role", "==", "student-organization"), where("status", "==", "təsdiqlənmiş")), [firestore]);
   const categoriesQuery = useMemoFirebase(() => collection(firestore, "categories"), [firestore]);
   const newsQuery = useMemoFirebase(() => query(collection(firestore, 'news'), orderBy('createdAt', 'desc'), limit(3)), [firestore]);
 
-  const { data: students, isLoading: studentsLoading } = useCollection<Student>(studentsQuery);
-  const { data: studentOrgs, isLoading: studentOrgsLoading } = useCollection<StudentOrganization>(studentOrgsQuery);
-  const { data: categories, isLoading: categoriesLoading } = useCollection<CategoryData>(categoriesQuery);
-  const { data: latestNews, isLoading: newsLoading } = useCollection<News>(newsQuery);
+  const { data: students, isLoading: studentsLoading } = useCollectionOptimized<Student>(studentsQuery, { enableCache: true, disableRealtimeOnInit: true });
+  const { data: studentOrgs, isLoading: studentOrgsLoading } = useCollectionOptimized<StudentOrganization>(studentOrgsQuery, { enableCache: true, disableRealtimeOnInit: true });
+  const { data: categories, isLoading: categoriesLoading } = useCollectionOptimized<CategoryData>(categoriesQuery, { enableCache: true, disableRealtimeOnInit: true });
+  const { data: latestNews, isLoading: newsLoading } = useCollectionOptimized<News>(newsQuery, { enableCache: true, disableRealtimeOnInit: true });
 
   const [topTalents, setTopTalents] = useState<Student[]>([]);
   const [newMembers, setNewMembers] = useState<Student[]>([]);

@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { News } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase";
+import { useCollectionOptimized, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, query, orderBy, doc } from "firebase/firestore";
 import { format } from 'date-fns';
 
@@ -52,7 +52,7 @@ export default function AdminNewsPage() {
         firestore ? query(collection(firestore, `news`), orderBy("createdAt", "desc")) : null, 
         [firestore]
     );
-    const { data: news, isLoading } = useCollection<News>(newsQuery);
+    const { data: news, isLoading } = useCollectionOptimized<News>(newsQuery, { enableCache: true, disableRealtimeOnInit: true });
 
     const handleDelete = async (newsId: string) => {
         if (!firestore) return;

@@ -1,5 +1,5 @@
 'use client';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollectionOptimized, useFirestore, useMemoFirebase } from '@/firebase';
 import { StudentOrganization } from '@/types';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,10 +12,10 @@ export default function StudentOrganizationsPage() {
   const firestore = useFirestore();
 
   const studentOrgsQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'student-organizations'), where('status', '==', 'təsdiqlənmiş')) : null),
+    () => (firestore ? query(collection(firestore, 'users'), where("role", "==", "student-organization"), where('status', '==', 'təsdiqlənmiş')) : null),
     [firestore]
   );
-  const { data: studentOrgs, isLoading } = useCollection<StudentOrganization>(studentOrgsQuery);
+  const { data: studentOrgs, isLoading } = useCollectionOptimized<StudentOrganization>(studentOrgsQuery, { enableCache: true, disableRealtimeOnInit: true });
 
   return (
     <div className="container mx-auto py-12 px-4">

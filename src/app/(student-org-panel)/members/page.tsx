@@ -1,5 +1,5 @@
 'use client';
-import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { useFirestore, useCollectionOptimized, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Student } from '@/types';
 import { useState } from 'react';
 import { collection, doc, query, where, documentId } from 'firebase/firestore';
@@ -36,10 +36,10 @@ export default function OrganizationMembersPage() {
     () => (organization?.memberIds && organization.memberIds.length > 0 ? query(collection(firestore, 'users'), where(documentId(), 'in', organization.memberIds)) : null),
     [firestore, JSON.stringify(organization?.memberIds)]
   );
-  const { data: members, isLoading: membersLoading } = useCollection<Student>(membersQuery);
+  const { data: members, isLoading: membersLoading } = useCollectionOptimized<Student>(membersQuery, { enableCache: true, disableRealtimeOnInit: true });
 
   const allStudentsQuery = useMemoFirebase(() => query(collection(firestore, 'users'), where('role', '==', 'student')), [firestore]);
-  const { data: allStudents } = useCollection<Student>(allStudentsQuery);
+  const { data: allStudents } = useCollectionOptimized<Student>(allStudentsQuery, { enableCache: true, disableRealtimeOnInit: true });
 
   const studentOptions =
     allStudents?.filter(s => !organization?.memberIds?.includes(s.id)).map(s => ({

@@ -36,7 +36,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import type { Student, FacultyData, CategoryData } from '@/types';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollectionOptimized, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 
 
@@ -75,8 +75,8 @@ export default function RegisterStudentPage() {
   const facultiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'faculties') : null, [firestore]);
   const categoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'categories') : null, [firestore]);
 
-  const { data: faculties, isLoading: facultiesLoading } = useCollection<FacultyData>(facultiesQuery);
-  const { data: categories, isLoading: categoriesLoading } = useCollection<CategoryData>(categoriesQuery);
+  const { data: faculties, isLoading: facultiesLoading } = useCollectionOptimized<FacultyData>(facultiesQuery, { enableCache: true, disableRealtimeOnInit: true });
+  const { data: categories, isLoading: categoriesLoading } = useCollectionOptimized<CategoryData>(categoriesQuery, { enableCache: true, disableRealtimeOnInit: true });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

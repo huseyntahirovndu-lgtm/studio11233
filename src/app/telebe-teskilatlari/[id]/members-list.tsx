@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollectionOptimized, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, documentId, query, where } from 'firebase/firestore';
 import { Student, StudentOrganization } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +29,7 @@ export default function MembersList({ organization }: MembersListProps) {
     [firestore, JSON.stringify(organization?.memberIds), currentUser]
   );
 
-  const { data: members, isLoading: membersLoading } = useCollection<Student>(membersQuery);
+  const { data: members, isLoading: membersLoading } = useCollectionOptimized<Student>(membersQuery, { enableCache: true, disableRealtimeOnInit: true });
 
   return (
     <Card>

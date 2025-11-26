@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollectionOptimized, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 
 
@@ -38,9 +38,9 @@ export default function RankingsPage() {
     [firestore]
   );
 
-  const { data: students, isLoading: studentsLoading } = useCollection<Student>(studentsQuery);
-  const { data: faculties, isLoading: facultiesLoading } = useCollection<FacultyData>(facultiesQuery);
-  const { data: categories, isLoading: categoriesLoading } = useCollection<CategoryData>(categoriesQuery);
+  const { data: students, isLoading: studentsLoading } = useCollectionOptimized<Student>(studentsQuery, { enableCache: true, disableRealtimeOnInit: true });
+  const { data: faculties, isLoading: facultiesLoading } = useCollectionOptimized<FacultyData>(facultiesQuery, { enableCache: true, disableRealtimeOnInit: true });
+  const { data: categories, isLoading: categoriesLoading } = useCollectionOptimized<CategoryData>(categoriesQuery, { enableCache: true, disableRealtimeOnInit: true });
 
   const isLoading = studentsLoading || facultiesLoading || categoriesLoading;
 

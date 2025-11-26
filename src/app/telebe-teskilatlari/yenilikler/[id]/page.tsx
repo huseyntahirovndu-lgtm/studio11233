@@ -24,16 +24,21 @@ export default function StudentOrgUpdateDetailsPage() {
     const { data: update, isLoading: isUpdateLoading } = useDoc<StudentOrgUpdate>(updateDocRef);
 
     const orgDocRef = useMemoFirebase(() =>
-      firestore && update?.organizationId ? doc(firestore, 'student-organizations', update.organizationId) : null,
+      firestore && update?.organizationId ? doc(firestore, 'users', update.organizationId) : null,
       [firestore, update?.organizationId]
     );
     const { data: organization, isLoading: isOrgLoading } = useDoc<StudentOrganization>(orgDocRef);
     
     const isLoading = isUpdateLoading || (update && !organization);
 
-    const sanitizedContent = update?.content && typeof window !== 'undefined'
-        ? DOMPurify.sanitize(update.content)
-        : update?.content;
+    const [sanitizedContent, setSanitizedContent] = useState('');
+
+    useEffect(() => {
+      if (update?.content && typeof window !== 'undefined') {
+        setSanitizedContent(DOMPurify.sanitize(update.content));
+      }
+    }, [update?.content]);
+
 
     if (isLoading) {
         return (

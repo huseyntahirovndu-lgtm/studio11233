@@ -1,6 +1,6 @@
 'use client';
 import { useParams } from 'next/navigation';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollectionOptimized, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import { News, Admin } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { Calendar, User } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { useEffect, useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -45,16 +45,16 @@ export default function NewsDetailsPage() {
         [firestore, newsSlug]
     );
 
-    const { data: newsData, isLoading: isNewsLoading } = useCollection<News>(newsQuery);
+    const { data: newsData, isLoading: isNewsLoading } = useCollectionOptimized<News>(newsQuery, { enableCache: true, disableRealtimeOnInit: true });
     const newsItem = newsData?.[0];
 
     const authorQuery = useMemoFirebase(() =>
         firestore && newsItem?.authorId
             ? query(collection(firestore, 'users'), where('id', '==', newsItem.authorId), limit(1))
             : null,
-        [firestore, newsItem]
+        [firestore, newsItem?.authorId]
     );
-    const { data: authorData, isLoading: isAuthorLoading } = useCollection<Admin>(authorQuery);
+    const { data: authorData, isLoading: isAuthorLoading } = useCollectionOptimized<Admin>(authorQuery, { enableCache: true, disableRealtimeOnInit: true });
     const author = authorData?.[0];
 
     const [sanitizedContent, setSanitizedContent] = useState('');
